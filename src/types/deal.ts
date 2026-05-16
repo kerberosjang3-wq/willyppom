@@ -1,0 +1,65 @@
+export type SourceId = 'ppomppu' | 'clien' | 'ruliweb' | 'fmkorea';
+
+export type CategoryId =
+  | 'all'
+  | 'electronics'
+  | 'food'
+  | 'fashion'
+  | 'living'
+  | 'travel'
+  | 'game'
+  | 'beauty'
+  | 'etc';
+
+export interface Deal {
+  id: string;
+  title: string;
+  url: string;
+  price?: string;
+  originalPrice?: string;
+  discountRate?: string;
+  thumbnail?: string;
+  source: SourceId;
+  sourceName: string;
+  category: CategoryId;
+  commentCount: number;
+  likeCount: number;
+  hotScore: number;
+  publishedAt: string; // ISO string
+  description?: string;
+}
+
+export interface DealsResponse {
+  deals: Deal[];
+  total: number;
+  lastUpdated: string;
+  sourceStats: Partial<Record<SourceId, { count: number; ok: boolean }>>;
+}
+
+export interface DealsQuery {
+  sources?: SourceId[];
+  category?: CategoryId;
+  page?: number;
+  limit?: number;
+  sort?: 'hot' | 'new';
+  q?: string;
+}
+
+export const SOURCE_META: Record<SourceId, { name: string; color: string; bg: string }> = {
+  ppomppu: { name: '뽐뿌',     color: '#ff6b6b', bg: 'bg-red-900/50'    },
+  clien:   { name: '클리앙',   color: '#4ecdc4', bg: 'bg-teal-900/50'   },
+  ruliweb: { name: '루리웹',   color: '#45b7d1', bg: 'bg-sky-900/50'    },
+  fmkorea: { name: '에펨코리아', color: '#96ceb4', bg: 'bg-green-900/50' },
+};
+
+export const CATEGORY_META: Record<CategoryId, { name: string; emoji: string }> = {
+  all:         { name: '전체',   emoji: '🔥' },
+  electronics: { name: '전자',   emoji: '📱' },
+  food:        { name: '식품',   emoji: '🍔' },
+  fashion:     { name: '패션',   emoji: '👗' },
+  living:      { name: '생활',   emoji: '🏠' },
+  travel:      { name: '여행',   emoji: '✈️' },
+  game:        { name: '게임',   emoji: '🎮' },
+  beauty:      { name: '뷰티',   emoji: '💄' },
+  etc:         { name: '기타',   emoji: '📦' },
+};
