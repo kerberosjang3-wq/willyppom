@@ -38,7 +38,8 @@ export async function scrapeFmkorea(): Promise<Deal[]> {
       const likeText = $(el).find('.pc_voted_count, .recommend').text().trim();
       const priceText = $(el).find('.hotdeal_info span:nth-child(2), .hotdeal_var4').text().trim();
       const timeText = $(el).find('.hotdeal_info span:last-child, time').text().trim();
-      const imgSrc   = $(el).find('img.thumb, img').attr('src');
+      const imgEl    = $(el).find('img.thumb, img').first();
+      const imgSrc   = imgEl.attr('data-original') || imgEl.attr('src');
 
       const commentCount = safeNumber(commText.replace(/[^\d]/g, ''));
       const likeCount    = safeNumber(likeText.replace(/[^\d]/g, ''));

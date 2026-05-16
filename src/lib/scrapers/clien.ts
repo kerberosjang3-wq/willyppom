@@ -25,11 +25,11 @@ export async function scrapeClien(): Promise<Deal[]> {
     $('.list_item').each((i, el) => {
       if (i >= 40) return false;
 
-      const titleEl  = $(el).find('a[data-role="list-title-text"]');
+      const titleEl  = $(el).find('[data-role="list-title-text"]');
       const title    = titleEl.text().trim();
       if (!title) return;
 
-      const href     = titleEl.attr('href') ?? '';
+      const href     = $(el).attr('href') ?? '';
       const url      = href.startsWith('http') ? href : BASE_URL + href;
       
       // Use data attribute for comments if available

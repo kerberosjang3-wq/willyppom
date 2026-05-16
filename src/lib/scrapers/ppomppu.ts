@@ -25,19 +25,25 @@ export async function scrapePpomppu(): Promise<Deal[]> {
     const deals: Deal[] = [];
     const now = new Date();
 
-    $('.bbsList li').each((i, el) => {
+    $('.bbsList_new > li').each((i, el) => {
       if (i >= 40) return false;
 
-      const titleEl = $(el).find('.title');
-      const title   = titleEl.text().trim();
+      const titleEl = $(el).find('.title .cont').first();
+      let title = titleEl.text().trim();
+      if (!title) {
+        title = $(el).find('.title').clone().find('.rp').remove().end().text().trim();
+      }
       if (!title) return;
 
-      const href    = $(el).find('a').attr('href') ?? '';
-      const url     = href.startsWith('http') ? href : BASE_URL + '/new/' + href;
+      const href    = $(el).find('a').first().attr('href') ?? '';
+      const url     = href.startsWith('http')
+        ? href
+        : (href.startsWith('/') ? BASE_URL + href : BASE_URL + '/new/' + href);
       
-      const commText = $(el).find('.comment_num').text().trim();
-      const likeText = $(el).find('.voted_count').text().trim() || '0';
-      const imgSrc   = $(el).find('.thumb img').attr('src');
+      const commText = $(el).find('.rp').first().text().trim();
+      const likeText = $(el).find('.recs').first().text().trim() || '0';
+      const imgEl    = $(el).find('div[class^="thmb_"] img, .thumb img').first();
+      const imgSrc   = imgEl.attr('src');
 
       const commentCount = safeNumber(commText.replace(/[^\d]/g, ''));
       const likeCount    = safeNumber(likeText.replace(/[^\d]/g, ''));
