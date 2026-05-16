@@ -3,6 +3,8 @@ import { fetchAllDeals } from '@/lib/scrapers';
 import { getCache, setCache } from '@/lib/cache';
 import { MOCK_DEALS } from '@/lib/mockDeals';
 import type { DealsResponse, SourceId, CategoryId, DealsQuery } from '@/types/deal';
+import { normalizeDeal } from '@/lib/parser';
+import { aggregateDeals } from '@/lib/aggregator';
 
 const CACHE_KEY = 'deals:all';
 const CACHE_TTL = 20 * 60 * 1000; // 20 minutes
@@ -30,7 +32,7 @@ export async function GET(req: NextRequest) {
       // Fallback to mock data if all scrapers fail
       if (response.total === 0) {
         response = {
-          deals: MOCK_DEALS,
+          deals: MOCK_DEALS.map(d => ({...d, productName: d.title})),
           total: MOCK_DEALS.length,
           lastUpdated: new Date().toISOString(),
           sourceStats: {
@@ -40,11 +42,17 @@ export async function GET(req: NextRequest) {
             fmkorea: { count: 2, ok: false },
           },
         };
+      } else {
+        // Apply normalizer and aggregator
+        const normalized = response.deals.map(normalizeDeal);
+        const aggregated = aggregateDeals(normalized);
+        response.deals = aggregated;
+        response.total = aggregated.length;
       }
       setCache(CACHE_KEY, response, CACHE_TTL);
     } catch {
       response = {
-        deals: MOCK_DEALS,
+        deals: MOCK_DEALS.map(d => ({...d, productName: d.title})),
         total: MOCK_DEALS.length,
         lastUpdated: new Date().toISOString(),
         sourceStats: {},

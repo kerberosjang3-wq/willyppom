@@ -14,10 +14,13 @@ export type CategoryId =
 export interface Deal {
   id: string;
   title: string;
+  productName?: string; // Cleaned and parsed product name
   url: string;
   price?: string;
   originalPrice?: string;
   discountRate?: string;
+  shipping?: string; // Parsed shipping info (e.g., "무료배송")
+  mallName?: string; // Parsed mall name (e.g., "지마켓", "알리")
   thumbnail?: string;
   source: SourceId;
   sourceName: string;
@@ -27,6 +30,7 @@ export interface Deal {
   hotScore: number;
   publishedAt: string; // ISO string
   description?: string;
+  duplicateSources?: { source: SourceId; sourceName: string; url: string }[]; // Links from merged duplicates
 }
 
 export interface DealsResponse {

@@ -4,6 +4,7 @@ export const MOCK_DEALS: Deal[] = [
   {
     id: 'ppomppu-mock-1',
     title: '[삼성] 갤럭시 버즈3 프로 정품 역대급 특가',
+    productName: '갤럭시 버즈3 프로 정품 역대급 특가',
     url: 'https://www.ppomppu.co.kr',
     price: '89,000원',
     originalPrice: '149,000원',
@@ -16,6 +17,7 @@ export const MOCK_DEALS: Deal[] = [
   {
     id: 'clien-mock-1',
     title: '애플 에어팟 프로 2세대 USB-C 세일',
+    productName: '애플 에어팟 프로 2세대 USB-C 세일',
     url: 'https://www.clien.net',
     price: '199,000원',
     originalPrice: '329,000원',
@@ -27,6 +29,7 @@ export const MOCK_DEALS: Deal[] = [
   {
     id: 'ruliweb-mock-1',
     title: 'PS5 슬림 디스크 에디션 + 게임 2종 번들 핫딜',
+    productName: 'PS5 슬림 디스크 에디션 + 게임 2종 번들 핫딜',
     url: 'https://bbs.ruliweb.com',
     price: '549,000원',
     originalPrice: '699,000원',
@@ -38,6 +41,7 @@ export const MOCK_DEALS: Deal[] = [
   {
     id: 'fmkorea-mock-1',
     title: '[BBQ] 황금올리브치킨 + 콜라 2L 세트 반값 할인',
+    productName: '황금올리브치킨 + 콜라 2L 세트 반값 할인',
     url: 'https://www.fmkorea.com',
     price: '12,500원',
     originalPrice: '25,000원',
@@ -50,6 +54,7 @@ export const MOCK_DEALS: Deal[] = [
   {
     id: 'ppomppu-mock-2',
     title: '나이키 에어맥스 90 봄 시즌 한정 세일',
+    productName: '나이키 에어맥스 90 봄 시즌 한정 세일',
     url: 'https://www.ppomppu.co.kr',
     price: '79,000원',
     originalPrice: '149,000원',
@@ -61,6 +66,7 @@ export const MOCK_DEALS: Deal[] = [
   {
     id: 'clien-mock-2',
     title: '샤오미 로봇청소기 S10+ 국내정품 최저가',
+    productName: '샤오미 로봇청소기 S10+ 국내정품 최저가',
     url: 'https://www.clien.net',
     price: '289,000원',
     originalPrice: '499,000원',
@@ -72,6 +78,7 @@ export const MOCK_DEALS: Deal[] = [
   {
     id: 'ruliweb-mock-2',
     title: '닌텐도 스위치 OLED 젤다의 전설 에디션',
+    productName: '닌텐도 스위치 OLED 젤다의 전설 에디션',
     url: 'https://bbs.ruliweb.com',
     price: '399,000원',
     source: 'ruliweb', sourceName: '루리웹', category: 'game',
@@ -81,6 +88,7 @@ export const MOCK_DEALS: Deal[] = [
   {
     id: 'fmkorea-mock-2',
     title: '[쿠팡] 비비고 왕교자 1.4kg x 3봉 무료배송',
+    productName: '비비고 왕교자 1.4kg x 3봉 무료배송',
     url: 'https://www.fmkorea.com',
     price: '18,900원',
     originalPrice: '28,500원',

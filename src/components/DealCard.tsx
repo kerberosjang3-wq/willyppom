@@ -52,28 +52,60 @@ export default function DealCard({ deal }: Props) {
         <div className="flex-1 min-w-0 flex flex-col justify-between h-20 py-0.5">
           <div>
             {/* Source & Time */}
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
               <span
                 className="text-[10px] font-bold px-1.5 py-0.5 rounded-md"
                 style={{ color: meta.color, backgroundColor: `${meta.color}15` }}
               >
                 {deal.sourceName}
               </span>
-              <span className="text-[10px] text-zinc-500">{timeAgo}</span>
+              
+              {/* Duplicate Sources Badges */}
+              {deal.duplicateSources && deal.duplicateSources.length > 0 && (
+                <div className="flex items-center gap-1 border-l border-zinc-700 pl-2">
+                  {deal.duplicateSources.map(src => {
+                    const srcMeta = SOURCE_META[src.source];
+                    return srcMeta ? (
+                      <span
+                        key={src.url}
+                        className="text-[9px] font-bold px-1 py-0.5 rounded"
+                        style={{ color: srcMeta.color, backgroundColor: `${srcMeta.color}15` }}
+                        title={src.sourceName}
+                      >
+                        {srcMeta.name[0]}
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              )}
+              
+              <span className="text-[10px] text-zinc-500 ml-auto">{timeAgo}</span>
             </div>
 
-            {/* Title */}
+            {/* Title & Mall Name */}
             <p className="text-sm font-medium text-zinc-100 leading-snug line-clamp-2">
-              {deal.title}
+              {deal.mallName && (
+                <span className="text-[10px] text-brand-300 border border-brand-500/30 bg-brand-900/20 px-1 rounded mr-1.5 align-text-bottom">
+                  {deal.mallName}
+                </span>
+              )}
+              {deal.productName || deal.title}
             </p>
           </div>
 
           {/* Price & Stats */}
           <div className="flex items-end justify-between">
             <div className="flex flex-col">
-              {deal.price && (
-                <span className="text-brand-400 font-bold text-sm leading-none">{deal.price}</span>
-              )}
+              <div className="flex items-center gap-1.5">
+                {deal.price && (
+                  <span className="text-brand-400 font-bold text-sm leading-none">{deal.price}</span>
+                )}
+                {deal.shipping && (
+                  <span className="text-zinc-400 text-[10px] bg-zinc-800 px-1 rounded leading-none py-0.5">
+                    {deal.shipping}
+                  </span>
+                )}
+              </div>
               {deal.discountRate && (
                 <span className="text-green-400 text-[10px] font-bold mt-0.5">{deal.discountRate}</span>
               )}
