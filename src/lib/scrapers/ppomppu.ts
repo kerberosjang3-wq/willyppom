@@ -9,13 +9,17 @@ const TIMEOUT   = 10_000;
 
 export async function scrapePpomppu(): Promise<Deal[]> {
   try {
-    const { data: html } = await axios.get<string>(BOARD_URL, {
+    const res = await axios.get(BOARD_URL, {
       timeout: TIMEOUT,
+      responseType: 'arraybuffer',
       headers: {
         'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
         'Accept-Language': 'ko-KR,ko;q=0.9',
       },
     });
+
+    const decoder = new TextDecoder('euc-kr');
+    const html = decoder.decode(res.data);
 
     const $ = cheerio.load(html);
     const deals: Deal[] = [];
