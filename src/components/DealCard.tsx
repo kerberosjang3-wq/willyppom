@@ -168,7 +168,7 @@ export default function DealCard({ deal }: Props) {
           </span>
         )}
         {isNew && (
-          <span className="bg-emerald-600/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+          <span className="bg-emerald-600/80 text-white text-[6px] font-bold px-1 py-0.5 rounded">
             NEW
           </span>
         )}

@@ -5,9 +5,8 @@ import type { Deal, CategoryId } from '@/types/deal';
 import DealCard from './DealCard';
 import LoadingCard from './LoadingCard';
 import Header from './Header';
-import FilterBar, { type PriceFilter } from './FilterBar';
+import FilterBar from './FilterBar';
 import { getReadIds } from '@/hooks/useReadDeal';
-import { parsePriceValue } from '@/lib/supabase';
 import { getKeywords } from '@/hooks/useKeywords';
 import KeywordToast from './KeywordToast';
 import KeywordPanel from './KeywordPanel';
@@ -45,7 +44,6 @@ export default function DealFeed() {
   const [category, setCategory]     = useState<CategoryId>('all');
   const [sort, setSort]             = useState<'view' | 'date' | 'comment'>('view');
   const [searchQuery, setSearchQuery] = useState('');
-  const [priceMax, setPriceMax]     = useState<PriceFilter>(0);
   const [showKeywords, setShowKeywords] = useState(false);
   const prevDealIdsRef = useRef<Set<string>>(new Set());
   const [keywords, setKeywords]     = useState<string[]>([]);
@@ -176,23 +174,22 @@ export default function DealFeed() {
     <div className="bg-surface text-zinc-100">
       <KeywordToast deals={deals} prevDealIds={prevDealIdsRef.current} keywords={keywords} />
       {showKeywords && <KeywordPanel onClose={() => setShowKeywords(false)} />}
-      <Header
-        lastUpdated={lastUpdated}
-        total={total}
-        searchQuery={searchQuery}
-        onSearch={setSearchQuery}
-        onKeyword={() => setShowKeywords(true)}
-        keywordCount={keywords.length}
-      />
-
-      <FilterBar
-        activeCategory={category}
-        activeSort={sort}
-        activePriceMax={priceMax}
-        onCategory={c => { setCategory(c); }}
-        onSort={(s: 'view' | 'date' | 'comment') => setSort(s)}
-        onPriceMax={setPriceMax}
-      />
+      <div className="sticky top-0 z-20">
+        <Header
+          lastUpdated={lastUpdated}
+          total={total}
+          searchQuery={searchQuery}
+          onSearch={setSearchQuery}
+          onKeyword={() => setShowKeywords(true)}
+          keywordCount={keywords.length}
+        />
+        <FilterBar
+          activeCategory={category}
+          activeSort={sort}
+          onCategory={c => { setCategory(c); }}
+          onSort={(s: 'view' | 'date' | 'comment') => setSort(s)}
+        />
+      </div>
 
       {/* Pull-to-refresh 인디케이터 */}
       <div
@@ -232,13 +229,7 @@ export default function DealFeed() {
 
         {!loading && (
           <div className="mt-4 space-y-2 animate-fade-in">
-            {deals
-              .filter(deal => {
-                if (!priceMax) return true;
-                const val = parsePriceValue(deal.price);
-                return val !== null && val <= priceMax;
-              })
-              .map(deal => <DealCard key={deal.id} deal={deal} />)}
+            {deals.map(deal => <DealCard key={deal.id} deal={deal} />)}
           </div>
         )}
 
