@@ -22,8 +22,9 @@ export default function Header({
         {/* Top Row: Logo + Refresh */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/20">
-              <span className="text-lg">🔥</span>
+            <div className="w-8 h-8 rounded-xl overflow-hidden shadow-lg shadow-brand-500/20 bg-white/5 p-0.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/icon-192.png" alt="WillyPpom Logo" className="w-full h-full object-cover rounded-[10px]" />
             </div>
             <div className="flex flex-col">
               <h1 className="font-black text-sm tracking-tight text-zinc-100 uppercase">
