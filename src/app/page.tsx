@@ -1,5 +1,42 @@
+'use client';
+
+import { useState } from 'react';
 import DealFeed from '@/components/DealFeed';
+import BookmarkFeed from '@/components/BookmarkFeed';
+import LowestPriceFeed from '@/components/LowestPriceFeed';
+import BottomTabBar, { type TabId } from '@/components/BottomTabBar';
+import Header from '@/components/Header';
 
 export default function HomePage() {
-  return <DealFeed />;
+  const [tab, setTab] = useState<TabId>('feed');
+
+  return (
+    <div className="min-h-screen bg-surface text-zinc-100 pb-20">
+      {tab === 'feed' && <DealFeed />}
+
+      {tab === 'lowest' && (
+        <>
+          <Header total={0} searchQuery="" onSearch={() => {}} />
+          <div className="px-4 pt-3 pb-1 border-b border-surface-border/50">
+            <h2 className="text-sm font-bold text-zinc-100">역대 최저가</h2>
+            <p className="text-[11px] text-zinc-500">현재 역대 최저가를 달성한 딜만 모았어요</p>
+          </div>
+          <LowestPriceFeed />
+        </>
+      )}
+
+      {tab === 'bookmarks' && (
+        <>
+          <Header total={0} searchQuery="" onSearch={() => {}} />
+          <div className="px-4 pt-3 pb-1 border-b border-surface-border/50">
+            <h2 className="text-sm font-bold text-zinc-100">찜한 딜</h2>
+            <p className="text-[11px] text-zinc-500">북마크한 딜을 모아볼 수 있어요</p>
+          </div>
+          <BookmarkFeed />
+        </>
+      )}
+
+      <BottomTabBar active={tab} onChange={setTab} />
+    </div>
+  );
 }

@@ -5,7 +5,21 @@ import type { Deal, CategoryId } from '@/types/deal';
 import DealCard from './DealCard';
 import LoadingCard from './LoadingCard';
 import Header from './Header';
-import FilterBar from './FilterBar';
+import FilterBar, { type PriceFilter } from './FilterBar';
+import { getReadIds } from '@/hooks/useReadDeal';
+import { parsePriceValue } from '@/lib/supabase';
+import { getKeywords } from '@/hooks/useKeywords';
+import KeywordToast from './KeywordToast';
+import KeywordPanel from './KeywordPanel';
+
+// 마감·읽음 딜을 하단으로 밀어내는 정렬 (normal → read → soldOut)
+function prioritySort(deals: Deal[]): Deal[] {
+  const readIds = getReadIds();
+  return [...deals].sort((a, b) => {
+    const w = (d: Deal) => d.isSoldOut ? 2 : readIds.has(d.id) ? 1 : 0;
+    return w(a) - w(b);
+  });
+}
 
 interface FeedResponse {
   deals: Deal[];
@@ -31,6 +45,10 @@ export default function DealFeed() {
   const [category, setCategory]     = useState<CategoryId>('all');
   const [sort, setSort]             = useState<'view' | 'date' | 'comment'>('view');
   const [searchQuery, setSearchQuery] = useState('');
+  const [priceMax, setPriceMax]     = useState<PriceFilter>(0);
+  const [showKeywords, setShowKeywords] = useState(false);
+  const prevDealIdsRef = useRef<Set<string>>(new Set());
+  const [keywords, setKeywords]     = useState<string[]>([]);
 
   const sentinelRef    = useRef<HTMLDivElement>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -59,7 +77,10 @@ export default function DealFeed() {
       const res = await fetch(buildUrl(1, opts?.query ?? searchQuery, opts?.refresh));
       if (!res.ok) throw new Error('API 오류');
       const data: FeedResponse = await res.json();
-      setDeals(data.deals);
+      const sorted = prioritySort(data.deals);
+      prevDealIdsRef.current = new Set(deals.map(d => d.id));
+      setKeywords(getKeywords());
+      setDeals(sorted);
       setTotal(data.total);
       setPage(1);
       setHasMore(data.hasMore);
@@ -79,7 +100,7 @@ export default function DealFeed() {
       const res  = await fetch(buildUrl(next, searchQuery));
       if (!res.ok) return;
       const data: FeedResponse = await res.json();
-      setDeals(prev => [...prev, ...data.deals]);
+      setDeals(prev => prioritySort([...prev, ...data.deals]));
       setPage(next);
       setHasMore(data.hasMore);
     } finally {
@@ -152,19 +173,25 @@ export default function DealFeed() {
   }, [fetchMore]);
 
   return (
-    <div className="min-h-screen bg-surface text-zinc-100">
+    <div className="bg-surface text-zinc-100">
+      <KeywordToast deals={deals} prevDealIds={prevDealIdsRef.current} keywords={keywords} />
+      {showKeywords && <KeywordPanel onClose={() => setShowKeywords(false)} />}
       <Header
         lastUpdated={lastUpdated}
         total={total}
         searchQuery={searchQuery}
         onSearch={setSearchQuery}
+        onKeyword={() => setShowKeywords(true)}
+        keywordCount={keywords.length}
       />
 
       <FilterBar
         activeCategory={category}
         activeSort={sort}
+        activePriceMax={priceMax}
         onCategory={c => { setCategory(c); }}
         onSort={(s: 'view' | 'date' | 'comment') => setSort(s)}
+        onPriceMax={setPriceMax}
       />
 
       {/* Pull-to-refresh 인디케이터 */}
@@ -205,7 +232,13 @@ export default function DealFeed() {
 
         {!loading && (
           <div className="mt-4 space-y-2 animate-fade-in">
-            {deals.map(deal => <DealCard key={deal.id} deal={deal} />)}
+            {deals
+              .filter(deal => {
+                if (!priceMax) return true;
+                const val = parsePriceValue(deal.price);
+                return val !== null && val <= priceMax;
+              })
+              .map(deal => <DealCard key={deal.id} deal={deal} />)}
           </div>
         )}
 

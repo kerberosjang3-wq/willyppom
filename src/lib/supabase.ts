@@ -24,6 +24,7 @@ export interface PriceStats {
   historyCount: number;
   isAllTimeLow: boolean;
   minPriceStr: string;
+  matchKey?: string;
 }
 
 // Function to safely extract number from price string

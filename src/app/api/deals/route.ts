@@ -44,6 +44,7 @@ async function enrichWithPriceStatsAndLog(deals: any[]) {
             historyCount: 0,
             isAllTimeLow: false,
             minPriceStr: row.price_str,
+            matchKey: row.match_key,
           };
         }
         const st = statsMap[row.match_key];

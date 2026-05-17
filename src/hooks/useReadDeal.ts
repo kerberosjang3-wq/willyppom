@@ -22,6 +22,10 @@ function saveIds(ids: Set<string>) {
   } catch {}
 }
 
+export function getReadIds(): Set<string> {
+  return loadIds();
+}
+
 export function useReadDeal(id: string) {
   const [isRead, setIsRead] = useState(() => loadIds().has(id));
 

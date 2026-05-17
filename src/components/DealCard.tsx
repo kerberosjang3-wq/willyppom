@@ -3,19 +3,25 @@
 import { useState, useCallback } from 'react';
 import { format, isToday, isThisYear } from 'date-fns';
 import type { Deal } from '@/types/deal';
-import { SOURCE_META } from '@/types/deal';
+import { SOURCE_META, CATEGORY_META } from '@/types/deal';
 import PriceGauge from '@/components/PriceGauge';
 import { useReadDeal } from '@/hooks/useReadDeal';
+import { useBookmark } from '@/hooks/useBookmark';
 
 interface Props {
   deal: Deal;
 }
 
+const ONE_HOUR_MS = 60 * 60 * 1000;
+
 export default function DealCard({ deal }: Props) {
-  const meta    = SOURCE_META[deal.source];
-  const pubDate = new Date(deal.publishedAt);
-  const isHot   = deal.hotScore > 60;
-  const soldOut = deal.isSoldOut ?? false;
+  const meta     = SOURCE_META[deal.source];
+  const catMeta  = CATEGORY_META[deal.category];
+  const pubDate  = new Date(deal.publishedAt);
+  const isHot    = deal.hotScore > 60;
+  const soldOut  = deal.isSoldOut ?? false;
+  const isNew    = !soldOut && Date.now() - pubDate.getTime() < ONE_HOUR_MS;
+  const hasPrice = !!deal.price;
 
   const postTime = isToday(pubDate)
     ? format(pubDate, 'HH:mm')
@@ -23,7 +29,8 @@ export default function DealCard({ deal }: Props) {
       ? format(pubDate, 'MM/dd HH:mm')
       : format(pubDate, 'yy/MM/dd');
 
-  const { isRead, markRead } = useReadDeal(deal.id);
+  const { isRead, markRead }       = useReadDeal(deal.id);
+  const { isBookmarked, toggle }   = useBookmark(deal.id);
   const [mallLoading, setMallLoading] = useState(false);
 
   const handleMallClick = useCallback(async (e: React.MouseEvent) => {
@@ -44,10 +51,12 @@ export default function DealCard({ deal }: Props) {
     }
   }, [deal.url, mallLoading, markRead]);
 
-  return (
-    <div className={`bg-surface-card rounded-2xl overflow-hidden border border-surface-border/40 hover:bg-surface-hover transition-all duration-150 ${soldOut ? 'opacity-50' : isRead ? 'opacity-55' : ''}`}>
+  const opacityClass = soldOut ? 'opacity-50' : isRead ? 'opacity-55' : '';
 
-      {/* 클릭 시 뽐뿌 게시글로 이동 (1·2행) */}
+  return (
+    <div className={`bg-surface-card rounded-2xl overflow-hidden border border-surface-border/40 hover:bg-surface-hover transition-all duration-150 ${opacityClass}`}>
+
+      {/* 1·2행: 뽐뿌 게시글 링크 */}
       <a
         href={deal.url}
         target="_blank"
@@ -57,55 +66,71 @@ export default function DealCard({ deal }: Props) {
       >
         <div className="flex gap-2.5">
 
-          {/* 썸네일 */}
-          {deal.thumbnail && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={deal.thumbnail}
-              alt=""
-              referrerPolicy="no-referrer"
-              className="shrink-0 w-8 h-8 rounded-md object-cover bg-zinc-800"
-            />
-          )}
-
-          <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-
-          {/* 1행: 상품명 */}
-          <p className="text-[12px] font-medium text-zinc-100 leading-snug line-clamp-2">
-            {deal.productName || deal.title}
-          </p>
-
-          {/* 2행: 가격 + 배송비 + 할인율 + 채널명 */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {deal.price && (
-              <span className="text-brand-400 font-bold text-sm leading-none">{deal.price}</span>
+          {/* 썸네일 or 카테고리 이모지 placeholder */}
+          <div className="shrink-0 w-8 h-8 rounded-md overflow-hidden bg-zinc-800 flex items-center justify-center">
+            {deal.thumbnail ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={deal.thumbnail}
+                alt=""
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-base leading-none">{catMeta.emoji}</span>
             )}
-            {deal.shipping && (
-              <span className="text-zinc-400 text-[10px] bg-zinc-800 px-1 rounded leading-none py-0.5">
-                {deal.shipping}
-              </span>
-            )}
-            {deal.discountRate && (
-              <span className="text-emerald-400/70 text-[10px] font-bold">{deal.discountRate}</span>
-            )}
-            <span
-              className="text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-auto"
-              style={{ color: meta.color, backgroundColor: `${meta.color}15` }}
-            >
-              {deal.sourceName}
-            </span>
           </div>
 
-          {/* Price Gauge */}
-          {deal.priceStats && deal.priceStats.historyCount >= 1 && (
-            <PriceGauge currentPriceStr={deal.price} stats={deal.priceStats} />
-          )}
+          <div className="flex flex-col gap-1 flex-1 min-w-0">
+
+            {/* 1행: 상품명 */}
+            <p className={`font-medium text-zinc-100 leading-snug line-clamp-2 ${hasPrice ? 'text-[12px]' : 'text-[13px]'}`}>
+              {deal.productName || deal.title}
+            </p>
+
+            {/* 2행: 가격 정보 (가격 있을 때만) */}
+            {hasPrice && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-brand-400 font-bold text-sm leading-none">{deal.price}</span>
+                {deal.shipping && (
+                  <span className="text-zinc-400 text-[10px] bg-zinc-800 px-1 rounded leading-none py-0.5">
+                    {deal.shipping}
+                  </span>
+                )}
+                {deal.discountRate && (
+                  <span className="text-emerald-400/70 text-[10px] font-bold">{deal.discountRate}</span>
+                )}
+                <span
+                  className="text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-auto"
+                  style={{ color: meta.color, backgroundColor: `${meta.color}15` }}
+                >
+                  {deal.sourceName}
+                </span>
+              </div>
+            )}
+
+            {/* 가격 없을 때: 채널명만 오른쪽에 */}
+            {!hasPrice && (
+              <div className="flex items-center">
+                <span
+                  className="text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-auto"
+                  style={{ color: meta.color, backgroundColor: `${meta.color}15` }}
+                >
+                  {deal.sourceName}
+                </span>
+              </div>
+            )}
+
+            {/* Price Gauge */}
+            {deal.priceStats && deal.priceStats.historyCount >= 1 && (
+              <PriceGauge currentPriceStr={deal.price} stats={deal.priceStats} />
+            )}
 
           </div>
         </div>
       </a>
 
-      {/* 3행: 쇼핑몰 이동 뱃지 + HOT / 댓글·좋아요·시간 */}
+      {/* 3행: 쇼핑몰 뱃지 + 상태 뱃지 + 북마크 / 댓글·좋아요·시간 */}
       <div className="flex items-center gap-2 px-3 pb-3">
         <button
           onClick={handleMallClick}
@@ -142,13 +167,30 @@ export default function DealCard({ deal }: Props) {
             마감
           </span>
         )}
-        {!soldOut && isHot && (
+        {isNew && (
+          <span className="bg-emerald-600/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+            NEW
+          </span>
+        )}
+        {!soldOut && !isNew && isHot && (
           <span className="bg-brand-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
             HOT
           </span>
         )}
 
-        <div className="flex items-center gap-2 ml-auto">
+        {/* 북마크 버튼 */}
+        <button
+          onClick={e => { e.preventDefault(); e.stopPropagation(); toggle(deal); }}
+          className="ml-auto text-zinc-600 hover:text-yellow-400 transition-colors"
+          aria-label={isBookmarked ? '북마크 제거' : '북마크'}
+        >
+          <svg className="w-3.5 h-3.5" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+          </svg>
+        </button>
+
+        <div className="flex items-center gap-2">
           <span className="text-[10px] text-zinc-500 flex items-center gap-1">
             <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
