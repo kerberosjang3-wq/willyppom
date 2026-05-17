@@ -1,6 +1,6 @@
 import type { PriceStats } from '@/lib/supabase';
 
-export type SourceId = 'ppomppu';
+export type SourceId = 'ppomppu' | 'quasarzone';
 
 export type CategoryId =
   | 'all'
@@ -55,7 +55,8 @@ export interface DealsQuery {
 }
 
 export const SOURCE_META: Record<SourceId, { name: string; color: string; bg: string }> = {
-  ppomppu: { name: '뽐뿌', color: '#a07878', bg: 'bg-zinc-800/60' },
+  ppomppu:    { name: '뽐뿌',   color: '#a07878', bg: 'bg-zinc-800/60' },
+  quasarzone: { name: '퀘이사존', color: '#b08a40', bg: 'bg-zinc-800/60' },
 };
 
 export const CATEGORY_META: Record<CategoryId, { name: string; emoji: string }> = {
