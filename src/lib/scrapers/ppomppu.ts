@@ -39,7 +39,11 @@ export async function scrapePpomppu(): Promise<Deal[]> {
       const url     = href.startsWith('http')
         ? href
         : (href.startsWith('/') ? BASE_URL + href : BASE_URL + '/new/' + href);
-      
+
+      // 쇼핑포럼(id=ppomppu 이외 게시판) 제외
+      const boardId = new URLSearchParams(href.split('?')[1] ?? '').get('id');
+      if (boardId && boardId !== 'ppomppu') return;
+
       const commText = $(el).find('.rp').first().text().trim();
       const likeText = $(el).find('.recs').first().text().trim() || '0';
       const imgEl    = $(el).find('div[class^="thmb_"] img, .thumb img').first();

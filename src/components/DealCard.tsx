@@ -35,8 +35,8 @@ export default function DealCard({ deal }: Props) {
           {deal.productName || deal.title}
         </p>
 
-        {/* 2행: 가격 */}
-        <div className="flex items-center gap-1.5">
+        {/* 2행: 가격 + 배송비 + 할인율 + 채널명 */}
+        <div className="flex items-center gap-1.5 flex-wrap">
           {deal.price && (
             <span className="text-brand-400 font-bold text-sm leading-none">{deal.price}</span>
           )}
@@ -48,6 +48,12 @@ export default function DealCard({ deal }: Props) {
           {deal.discountRate && (
             <span className="text-green-400 text-[10px] font-bold">{deal.discountRate}</span>
           )}
+          <span
+            className="text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-auto"
+            style={{ color: meta.color, backgroundColor: `${meta.color}15` }}
+          >
+            {deal.sourceName}
+          </span>
         </div>
 
         {/* Price Gauge */}
@@ -55,21 +61,13 @@ export default function DealCard({ deal }: Props) {
           <PriceGauge currentPriceStr={deal.price} stats={deal.priceStats} />
         )}
 
-        {/* 3행: 채널명 + HOT + 중복소스 + 댓글/좋아요 + 시간 */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span
-            className="text-[10px] font-bold px-1.5 py-0.5 rounded-md"
-            style={{ color: meta.color, backgroundColor: `${meta.color}15` }}
-          >
-            {deal.sourceName}
-          </span>
-
+        {/* 3행: HOT / 댓글·좋아요·시간(우측) */}
+        <div className="flex items-center gap-2">
           {isHot && (
             <span className="bg-brand-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
               HOT
             </span>
           )}
-
           <div className="flex items-center gap-2 ml-auto">
             <span className="text-[10px] text-zinc-500 flex items-center gap-1">
               <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
