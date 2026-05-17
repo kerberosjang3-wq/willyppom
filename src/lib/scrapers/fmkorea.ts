@@ -1,13 +1,13 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import type { Deal } from '@/types/deal';
 import { detectCategory, calcHotScore, makeId, safeNumber } from './utils';
 
 const BOARD_URL = 'https://www.fmkorea.com/hotdeal';
 const BASE_URL  = 'https://www.fmkorea.com';
 const TIMEOUT   = 10_000;
 
-export async function scrapeFmkorea(): Promise<Deal[]> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function scrapeFmkorea(): Promise<any[]> {
   try {
     const { data: html } = await axios.get<string>(BOARD_URL, {
       timeout: TIMEOUT,
@@ -20,7 +20,7 @@ export async function scrapeFmkorea(): Promise<Deal[]> {
     });
 
     const $ = cheerio.load(html);
-    const deals: Deal[] = [];
+    const deals: any[] = [];
     const now = new Date();
 
     $('li.li').each((i, el) => {

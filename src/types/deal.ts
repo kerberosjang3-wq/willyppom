@@ -1,6 +1,6 @@
 import type { PriceStats } from '@/lib/supabase';
 
-export type SourceId = 'ppomppu' | 'clien' | 'ruliweb' | 'fmkorea';
+export type SourceId = 'ppomppu';
 
 export type CategoryId =
   | 'all'
@@ -53,10 +53,7 @@ export interface DealsQuery {
 }
 
 export const SOURCE_META: Record<SourceId, { name: string; color: string; bg: string }> = {
-  ppomppu: { name: '뽐뿌',     color: '#ff6b6b', bg: 'bg-red-900/50'    },
-  clien:   { name: '클리앙',   color: '#4ecdc4', bg: 'bg-teal-900/50'   },
-  ruliweb: { name: '루리웹',   color: '#45b7d1', bg: 'bg-sky-900/50'    },
-  fmkorea: { name: '에펨코리아', color: '#96ceb4', bg: 'bg-green-900/50' },
+  ppomppu: { name: '뽐뿌', color: '#ff6b6b', bg: 'bg-red-900/50' },
 };
 
 export const CATEGORY_META: Record<CategoryId, { name: string; emoji: string }> = {

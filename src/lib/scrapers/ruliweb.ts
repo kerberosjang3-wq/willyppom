@@ -1,13 +1,13 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import type { Deal } from '@/types/deal';
 import { detectCategory, calcHotScore, makeId, safeNumber } from './utils';
 
 const BOARD_URL = 'https://bbs.ruliweb.com/market/board/1020?view=thumbnail&page=1';
 const BASE_URL  = 'https://bbs.ruliweb.com';
 const TIMEOUT   = 10_000;
 
-export async function scrapeRuliweb(): Promise<Deal[]> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function scrapeRuliweb(): Promise<any[]> {
   try {
     const { data: html } = await axios.get<string>(BOARD_URL, {
       timeout: TIMEOUT,
@@ -19,7 +19,7 @@ export async function scrapeRuliweb(): Promise<Deal[]> {
     });
 
     const $ = cheerio.load(html);
-    const deals: Deal[] = [];
+    const deals: any[] = [];
     const now = new Date();
 
     // Thumbnail view: each item is .table_body tr or li.item_box

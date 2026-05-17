@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchAllDeals } from '@/lib/scrapers';
 import { getCache, setCache } from '@/lib/cache';
 import { MOCK_DEALS } from '@/lib/mockDeals';
-import type { DealsResponse, SourceId, CategoryId, DealsQuery } from '@/types/deal';
+import type { DealsResponse, CategoryId } from '@/types/deal';
 import { normalizeDeal } from '@/lib/parser';
 import { aggregateDeals } from '@/lib/aggregator';
 import { supabase, parsePriceValue, type PriceStats } from '@/lib/supabase';
@@ -99,11 +99,6 @@ async function enrichWithPriceStatsAndLog(deals: any[]) {
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
 
-  const sourcesParam = searchParams.get('sources');
-  const sources = sourcesParam
-    ? (sourcesParam.split(',') as SourceId[])
-    : undefined;
-
   const category  = (searchParams.get('category') ?? 'all') as CategoryId;
   const sort      = (searchParams.get('sort') ?? 'hot') as 'hot' | 'new';
   const page      = Math.max(1, parseInt(searchParams.get('page') ?? '1'));
@@ -115,19 +110,14 @@ export async function GET(req: NextRequest) {
 
   if (!response) {
     try {
-      response = await fetchAllDeals(sources);
+      response = await fetchAllDeals();
       // Fallback to mock data if all scrapers fail
       if (response.total === 0) {
         response = {
           deals: MOCK_DEALS.map(d => ({...d, productName: d.title})),
           total: MOCK_DEALS.length,
           lastUpdated: new Date().toISOString(),
-          sourceStats: {
-            ppomppu: { count: 2, ok: false },
-            clien:   { count: 2, ok: false },
-            ruliweb: { count: 2, ok: false },
-            fmkorea: { count: 2, ok: false },
-          },
+          sourceStats: { ppomppu: { count: 0, ok: false } },
         };
       } else {
         // Apply normalizer and aggregator
@@ -151,11 +141,6 @@ export async function GET(req: NextRequest) {
   }
 
   let deals = [...response.deals];
-
-  // Filter by sources
-  if (sources?.length) {
-    deals = deals.filter(d => sources.includes(d.source));
-  }
 
   // Filter by category
   if (category && category !== 'all') {

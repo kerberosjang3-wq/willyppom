@@ -1,13 +1,13 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import type { Deal } from '@/types/deal';
 import { detectCategory, calcHotScore, makeId, safeNumber } from './utils';
 
 const BOARD_URL = 'https://www.clien.net/service/board/jirum?&od=T31&po=0';
 const BASE_URL  = 'https://www.clien.net';
 const TIMEOUT   = 10_000;
 
-export async function scrapeClien(): Promise<Deal[]> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function scrapeClien(): Promise<any[]> {
   try {
     const { data: html } = await axios.get<string>(BOARD_URL, {
       timeout: TIMEOUT,
@@ -19,7 +19,7 @@ export async function scrapeClien(): Promise<Deal[]> {
     });
 
     const $ = cheerio.load(html);
-    const deals: Deal[] = [];
+    const deals: any[] = [];
     const now = new Date();
 
     $('.list_item').each((i, el) => {

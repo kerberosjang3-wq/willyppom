@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Deal, CategoryId, SourceId } from '@/types/deal';
+import type { Deal, CategoryId } from '@/types/deal';
 import DealCard from './DealCard';
 import LoadingCard from './LoadingCard';
 import Header from './Header';
@@ -28,7 +28,6 @@ export default function DealFeed() {
   const [error, setError]           = useState<string>();
 
   const [category, setCategory]     = useState<CategoryId>('all');
-  const [sources, setSources]       = useState<SourceId[]>([]);
   const [sort, setSort]             = useState<'hot' | 'new'>('hot');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -37,7 +36,6 @@ export default function DealFeed() {
 
   const buildUrl = useCallback((p: number, q?: string, refresh = false) => {
     const params = new URLSearchParams();
-    if (sources.length) params.set('sources', sources.join(','));
     if (category !== 'all') params.set('category', category);
     params.set('sort', sort);
     params.set('page', String(p));
@@ -45,7 +43,7 @@ export default function DealFeed() {
     if (q) params.set('q', q);
     if (refresh) params.set('refresh', 'true');
     return `/api/deals?${params.toString()}`;
-  }, [sources, category, sort]);
+  }, [category, sort]);
 
   const fetchDeals = useCallback(async (opts?: { refresh?: boolean; query?: string }) => {
     setLoading(true);
@@ -83,7 +81,7 @@ export default function DealFeed() {
   }, [buildUrl, loadingMore, hasMore, page, searchQuery]);
 
   // Initial fetch + re-fetch when filters change
-  useEffect(() => { fetchDeals(); }, [category, sources, sort]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchDeals(); }, [category, sort]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Debounced search
   useEffect(() => {
@@ -109,12 +107,6 @@ export default function DealFeed() {
     return () => obs.disconnect();
   }, [fetchMore]);
 
-  const handleSourceToggle = (s: SourceId) => {
-    setSources(prev =>
-      prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]
-    );
-  };
-
   return (
     <div className="min-h-screen bg-surface text-zinc-100">
       <Header
@@ -128,10 +120,8 @@ export default function DealFeed() {
 
       <FilterBar
         activeCategory={category}
-        activeSources={sources}
         activeSort={sort}
         onCategory={c => { setCategory(c); }}
-        onSource={handleSourceToggle}
         onSort={s => setSort(s)}
       />
 

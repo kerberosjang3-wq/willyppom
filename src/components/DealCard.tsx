@@ -70,24 +70,6 @@ export default function DealCard({ deal }: Props) {
             </span>
           )}
 
-          {deal.duplicateSources && deal.duplicateSources.length > 0 && (
-            <div className="flex items-center gap-1 border-l border-zinc-700 pl-2">
-              {deal.duplicateSources.map(src => {
-                const srcMeta = SOURCE_META[src.source];
-                return srcMeta ? (
-                  <span
-                    key={src.url}
-                    className="text-[9px] font-bold px-1 py-0.5 rounded"
-                    style={{ color: srcMeta.color, backgroundColor: `${srcMeta.color}15` }}
-                    title={src.sourceName}
-                  >
-                    {srcMeta.name[0]}
-                  </span>
-                ) : null;
-              })}
-            </div>
-          )}
-
           <div className="flex items-center gap-2 ml-auto">
             <span className="text-[10px] text-zinc-500 flex items-center gap-1">
               <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">

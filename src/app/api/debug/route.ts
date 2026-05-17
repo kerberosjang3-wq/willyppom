@@ -1,36 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { SCRAPERS } from '@/lib/scrapers';
+import { NextResponse } from 'next/server';
+import { scrapePpomppu } from '@/lib/scrapers/ppomppu';
 
-export async function GET(req: NextRequest) {
-  const results: any = {};
-  
-  for (const [name, scraper] of Object.entries(SCRAPERS)) {
-    try {
-      console.log(`[debug] scraping ${name}...`);
-      const deals = await scraper();
-      
-      let htmlSnippet = null;
-      if (name === 'ppomppu' && deals.length === 0) {
-        const res = await fetch('https://m.ppomppu.co.kr/new/bbs_list.php?id=ppomppu', {
-          headers: { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1' }
-        });
-        htmlSnippet = (await res.text()).slice(0, 2000);
-      }
+export async function GET() {
+  try {
+    const deals = await scrapePpomppu();
 
-      results[name] = {
-        count: deals.length,
-        ok: true,
-        first: deals[0] || null,
-        htmlSnippet
-      };
-    } catch (err: any) {
-      results[name] = {
-        count: 0,
-        ok: false,
-        error: err.message
-      };
+    let htmlSnippet = null;
+    if (deals.length === 0) {
+      const res = await fetch('https://m.ppomppu.co.kr/new/bbs_list.php?id=ppomppu&hotlist_flag=999', {
+        headers: { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1' }
+      });
+      htmlSnippet = (await res.text()).slice(0, 2000);
     }
-  }
 
-  return NextResponse.json(results);
+    return NextResponse.json({
+      ppomppu: { count: deals.length, ok: true, first: deals[0] ?? null, htmlSnippet },
+    });
+  } catch (err: any) {
+    return NextResponse.json({
+      ppomppu: { count: 0, ok: false, error: err.message },
+    });
+  }
 }
