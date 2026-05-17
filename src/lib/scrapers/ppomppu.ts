@@ -64,11 +64,13 @@ export async function scrapePpomppu(): Promise<Deal[]> {
 
       const commText = $(el).find('.rp').first().text().trim();
       const likeText = $(el).find('.recs').first().text().trim() || '0';
+      const viewText = $(el).find('.view').first().text().trim();
       const imgEl    = $(el).find('div[class^="thmb_"] img, .thumb img').first();
       const imgSrc   = imgEl.attr('src');
 
       const commentCount = safeNumber(commText.replace(/[^\d]/g, ''));
       const likeCount    = safeNumber(likeText.replace(/[^\d]/g, ''));
+      const viewCount    = safeNumber(viewText.replace(/[^\d]/g, '')) || undefined;
 
       const rawTime   = $(el).find('time').first().text().trim();
       const publishedAt = rawTime ? parsePostTime(rawTime) : now.toISOString();
@@ -83,6 +85,7 @@ export async function scrapePpomppu(): Promise<Deal[]> {
         category:     detectCategory(title),
         commentCount,
         likeCount,
+        viewCount,
         hotScore:     calcHotScore(commentCount, likeCount, 2),
         publishedAt,
       });

@@ -29,6 +29,7 @@ export interface Deal {
   category: CategoryId;
   commentCount: number;
   likeCount: number;
+  viewCount?: number;
   hotScore: number;
   publishedAt: string; // ISO string
   description?: string;
