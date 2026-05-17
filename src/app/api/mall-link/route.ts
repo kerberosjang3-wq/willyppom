@@ -76,10 +76,7 @@ export async function GET(request: Request) {
   try {
     let mallUrl: string | null = null;
 
-    if (postUrl.includes('fmkorea.com')) {
-      // 에펨코리아 개별 게시글은 WASM DDoS 방어로 서버 접근 불가 — 클라이언트가 게시글 URL로 직접 이동
-      return NextResponse.json({ error: 'no_mall_link' });
-    } else if (postUrl.includes('quasarzone.com')) {
+    if (postUrl.includes('quasarzone.com')) {
       mallUrl = await extractQuasarzoneMallUrl(postUrl);
     } else {
       mallUrl = await extractPpomppuMallUrl(postUrl);
