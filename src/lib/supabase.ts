@@ -25,6 +25,7 @@ export interface PriceStats {
   isAllTimeLow: boolean;
   minPriceStr: string;
   matchKey?: string;
+  sparkline?: { v: number; d: string }[]; // v=price_value, d=created_at (last 7 points)
 }
 
 // Function to safely extract number from price string

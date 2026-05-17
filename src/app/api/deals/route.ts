@@ -20,8 +20,9 @@ async function enrichWithPriceStatsAndLog(deals: any[]) {
 
     const { data: historyData } = await supabase
       .from('price_history')
-      .select('match_key, price_value, price_str')
-      .in('match_key', matchKeys);
+      .select('match_key, price_value, price_str, created_at')
+      .in('match_key', matchKeys)
+      .order('created_at', { ascending: true });
 
     deals.forEach((d, i) => {
       const pVal = parsePriceValue(d.price);
@@ -45,6 +46,7 @@ async function enrichWithPriceStatsAndLog(deals: any[]) {
             isAllTimeLow: false,
             minPriceStr: row.price_str,
             matchKey: row.match_key,
+            sparkline: [],
           };
         }
         const st = statsMap[row.match_key];
@@ -55,6 +57,14 @@ async function enrichWithPriceStatsAndLog(deals: any[]) {
         if (row.price_value > st.maxPrice) st.maxPrice = row.price_value;
         st.avgPrice   += row.price_value;
         st.historyCount++;
+        st.sparkline!.push({ v: row.price_value, d: row.created_at });
+      });
+
+      // Trim sparklines to last 7 points (rows already ordered ascending)
+      Object.values(statsMap).forEach(st => {
+        if (st.sparkline && st.sparkline.length > 7) {
+          st.sparkline = st.sparkline.slice(-7);
+        }
       });
 
       deals.forEach((d, i) => {
