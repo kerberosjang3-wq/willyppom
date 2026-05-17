@@ -23,12 +23,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overscroll-behavior: none;
-  }
-
-  /* iOS safe area support */
-  body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+    /* safe area는 각 컴포넌트에서 직접 처리 */
   }
 }
 
@@ -39,9 +34,13 @@
     40%, 80% { transform: translateX(4px); }
   }
 
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
+  /* Safe area 유틸리티 */
+  .pt-safe { padding-top:    env(safe-area-inset-top,    0px); }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .pl-safe { padding-left:   env(safe-area-inset-left,   0px); }
+  .pr-safe { padding-right:  env(safe-area-inset-right,  0px); }
+  /* 고정 탭바(약 60px) + 홈 인디케이터 safe area */
+  .pb-tab-safe { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 
   .scrollbar-hide {
     -ms-overflow-style: none;

@@ -44,7 +44,7 @@ const TABS: { id: TabId; label: string; icon: (active: boolean) => React.ReactNo
 
 export default function BottomTabBar({ active, onChange }: Props) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-30 bg-surface/90 backdrop-blur-xl border-t border-surface-border/50 pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-30 bg-surface/90 backdrop-blur-xl border-t border-surface-border/50 pb-safe pl-safe pr-safe">
       <div className="flex items-center justify-around px-2 pt-2 pb-3 max-w-lg mx-auto">
         {TABS.map(tab => {
           const isActive = active === tab.id;

@@ -12,15 +12,12 @@ interface Props {
   deal: Deal;
 }
 
-const ONE_HOUR_MS = 60 * 60 * 1000;
-
 export default function DealCard({ deal }: Props) {
   const meta     = SOURCE_META[deal.source];
   const catMeta  = CATEGORY_META[deal.category];
   const pubDate  = new Date(deal.publishedAt);
   const isHot    = deal.hotScore > 60;
   const soldOut  = deal.isSoldOut ?? false;
-  const isNew    = !soldOut && Date.now() - pubDate.getTime() < ONE_HOUR_MS;
   const hasPrice = !!deal.price;
 
   const postTime = isToday(pubDate)
@@ -167,12 +164,7 @@ export default function DealCard({ deal }: Props) {
             마감
           </span>
         )}
-        {isNew && (
-          <span className="bg-emerald-600/80 text-white text-[6px] font-bold px-1 py-0.5 rounded">
-            NEW
-          </span>
-        )}
-        {!soldOut && !isNew && isHot && (
+        {!soldOut && isHot && (
           <span className="bg-brand-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
             HOT
           </span>

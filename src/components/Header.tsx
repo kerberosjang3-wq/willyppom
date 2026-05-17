@@ -82,7 +82,7 @@ export default function Header({ lastUpdated, total, searchQuery, onSearch, onKe
   }, []);
 
   return (
-    <header className="bg-surface/80 backdrop-blur-xl border-b border-surface-border/50">
+    <header className="bg-surface/80 backdrop-blur-xl border-b border-surface-border/50 pt-safe">
       <div className="flex flex-col px-4 pt-2 pb-1.5 gap-2">
         {/* Logo */}
         <div className="flex items-center gap-2">

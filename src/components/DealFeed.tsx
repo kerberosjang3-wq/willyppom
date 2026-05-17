@@ -174,7 +174,7 @@ export default function DealFeed() {
     <div className="bg-surface text-zinc-100">
       <KeywordToast deals={deals} prevDealIds={prevDealIdsRef.current} keywords={keywords} />
       {showKeywords && <KeywordPanel onClose={() => setShowKeywords(false)} />}
-      <div className="sticky top-0 z-20">
+      <div className="sticky top-0 z-20 bg-surface">
         <Header
           lastUpdated={lastUpdated}
           total={total}
