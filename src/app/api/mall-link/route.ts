@@ -2,6 +2,69 @@ import { NextResponse } from 'next/server';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
+const HEADERS_DESKTOP = {
+  'User-Agent':      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept-Language': 'ko-KR,ko;q=0.9',
+};
+
+const HEADERS_MOBILE = {
+  'User-Agent':      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+  'Accept-Language': 'ko-KR,ko;q=0.9',
+};
+
+// 뽐뿌: s.ppomppu.co.kr?target=BASE64 → 원본 쇼핑몰 URL
+async function extractPpomppuMallUrl(postUrl: string): Promise<string | null> {
+  const { data } = await axios.get<ArrayBuffer>(postUrl, {
+    timeout: 8_000,
+    responseType: 'arraybuffer',
+    headers: HEADERS_MOBILE,
+  });
+
+  const html = new TextDecoder('euc-kr').decode(data);
+  const $ = cheerio.load(html);
+
+  let mallUrl: string | null = null;
+  $('a[href*="s.ppomppu.co.kr"]').each((_, el) => {
+    if (mallUrl) return;
+    const href = $(el).attr('href') ?? '';
+    try {
+      const u = new URL(href);
+      const target = u.searchParams.get('target');
+      if (target) {
+        const decoded = Buffer.from(target, 'base64').toString('utf-8');
+        if (decoded.startsWith('http')) mallUrl = decoded;
+      }
+    } catch { /* invalid URL */ }
+  });
+
+  return mallUrl;
+}
+
+// 퀘이사존: javascript:goToLink('BASE64') → 원본 쇼핑몰 URL
+async function extractQuasarzoneMallUrl(postUrl: string): Promise<string | null> {
+  const { data } = await axios.get<string>(postUrl, {
+    timeout: 8_000,
+    headers: { ...HEADERS_DESKTOP, Referer: 'https://quasarzone.com/bbs/qb_saleinfo' },
+  });
+
+  const $ = cheerio.load(data);
+
+  // 구매 링크: javascript:goToLink('BASE64_ENCODED_URL')
+  let mallUrl: string | null = null;
+  $('a[href^="javascript:goToLink"]').each((_, el) => {
+    if (mallUrl) return;
+    const href = $(el).attr('href') ?? '';
+    const m = href.match(/goToLink\('([^']+)'\)/);
+    if (!m) return;
+    try {
+      const decoded = Buffer.from(m[1], 'base64').toString('utf-8');
+      if (decoded.startsWith('http')) mallUrl = decoded;
+    } catch { /* invalid base64 */ }
+  });
+
+  return mallUrl;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const postUrl = searchParams.get('url');
@@ -11,37 +74,16 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { data } = await axios.get<ArrayBuffer>(postUrl, {
-      timeout: 8_000,
-      responseType: 'arraybuffer',
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-        'Accept-Language': 'ko-KR,ko;q=0.9',
-      },
-    });
-
-    const html = new TextDecoder('euc-kr').decode(data);
-    const $ = cheerio.load(html);
-
-    // 뽐뿌 리다이렉트 링크: https://s.ppomppu.co.kr?idno=...&target=<base64>
     let mallUrl: string | null = null;
-    $('a[href*="s.ppomppu.co.kr"]').each((_, el) => {
-      if (mallUrl) return;
-      const href = $(el).attr('href') ?? '';
-      try {
-        const u = new URL(href);
-        const target = u.searchParams.get('target');
-        if (target) {
-          const decoded = Buffer.from(target, 'base64').toString('utf-8');
-          if (decoded.startsWith('http')) {
-            mallUrl = decoded;
-          }
-        }
-      } catch {
-        // invalid URL, skip
-      }
-    });
+
+    if (postUrl.includes('fmkorea.com')) {
+      // 에펨코리아 개별 게시글은 WASM DDoS 방어로 서버 접근 불가 — 클라이언트가 게시글 URL로 직접 이동
+      return NextResponse.json({ error: 'no_mall_link' });
+    } else if (postUrl.includes('quasarzone.com')) {
+      mallUrl = await extractQuasarzoneMallUrl(postUrl);
+    } else {
+      mallUrl = await extractPpomppuMallUrl(postUrl);
+    }
 
     if (!mallUrl) {
       return NextResponse.json({ error: 'no_mall_link' });
