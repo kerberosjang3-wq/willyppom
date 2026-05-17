@@ -31,8 +31,16 @@ export default function DealFeed() {
   const [sort, setSort]             = useState<'view' | 'date' | 'comment'>('view');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  const sentinelRef    = useRef<HTMLDivElement>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const [pullY, setPullY]           = useState(0);
+  const [pullActive, setPullActive] = useState(false);
+  const touchStartY  = useRef(0);
+  const pullYRef     = useRef(0);
+  const fetchDealsRef = useRef<(opts?: { refresh?: boolean }) => Promise<void>>();
+
+  const PULL_THRESHOLD = 64;
 
   const buildUrl = useCallback((p: number, q?: string, refresh = false) => {
     const params = new URLSearchParams();
@@ -96,6 +104,43 @@ export default function DealFeed() {
     return () => clearInterval(id);
   }, [fetchDeals]);
 
+  // fetchDeals ref (이벤트 핸들러에서 최신 함수 참조)
+  useEffect(() => { fetchDealsRef.current = fetchDeals; }, [fetchDeals]);
+
+  // Pull-to-refresh
+  useEffect(() => {
+    const onTouchStart = (e: TouchEvent) => {
+      if (window.scrollY === 0) touchStartY.current = e.touches[0].clientY;
+      else touchStartY.current = 0;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (!touchStartY.current) return;
+      const delta = e.touches[0].clientY - touchStartY.current;
+      const clamped = Math.max(0, Math.min(delta, 96));
+      pullYRef.current = clamped;
+      setPullY(clamped);
+    };
+    const onTouchEnd = async () => {
+      if (!touchStartY.current) return;
+      touchStartY.current = 0;
+      if (pullYRef.current >= PULL_THRESHOLD) {
+        setPullActive(true);
+        await fetchDealsRef.current?.({ refresh: true });
+        setPullActive(false);
+      }
+      pullYRef.current = 0;
+      setPullY(0);
+    };
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
+    document.addEventListener('touchmove',  onTouchMove,  { passive: true });
+    document.addEventListener('touchend',   onTouchEnd,   { passive: true });
+    return () => {
+      document.removeEventListener('touchstart', onTouchStart);
+      document.removeEventListener('touchmove',  onTouchMove);
+      document.removeEventListener('touchend',   onTouchEnd);
+    };
+  }, [PULL_THRESHOLD]);
+
   // Infinite scroll via IntersectionObserver
   useEffect(() => {
     const el = sentinelRef.current;
@@ -124,6 +169,19 @@ export default function DealFeed() {
         onCategory={c => { setCategory(c); }}
         onSort={(s: 'view' | 'date' | 'comment') => setSort(s)}
       />
+
+      {/* Pull-to-refresh 인디케이터 */}
+      <div
+        className="flex items-center justify-center overflow-hidden transition-all duration-200"
+        style={{ height: pullActive ? 48 : pullY * 0.5 }}
+      >
+        <div
+          className={`w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full ${
+            pullActive || pullY >= PULL_THRESHOLD ? 'animate-spin' : ''
+          }`}
+          style={{ opacity: pullActive ? 1 : pullY / PULL_THRESHOLD }}
+        />
+      </div>
 
       <main className="px-4 pb-8">
         {/* Error */}

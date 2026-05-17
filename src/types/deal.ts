@@ -54,7 +54,7 @@ export interface DealsQuery {
 }
 
 export const SOURCE_META: Record<SourceId, { name: string; color: string; bg: string }> = {
-  ppomppu: { name: '뽐뿌', color: '#ff6b6b', bg: 'bg-red-900/50' },
+  ppomppu: { name: '뽐뿌', color: '#a07878', bg: 'bg-zinc-800/60' },
 };
 
 export const CATEGORY_META: Record<CategoryId, { name: string; emoji: string }> = {

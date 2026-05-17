@@ -38,14 +38,14 @@ export default function PriceGauge({ currentPriceStr, stats }: Props) {
           역대최저가: <span className="font-bold text-zinc-300">{stats.minPriceStr}</span>
         </span>
         {isAllTimeLow ? (
-          <span className="text-[10px] font-bold text-green-400 flex items-center gap-1 animate-pulse bg-green-400/10 px-1.5 py-0.5 rounded">
+          <span className="text-[10px] font-bold text-emerald-300/80 flex items-center gap-1 animate-pulse bg-emerald-400/10 px-1.5 py-0.5 rounded">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             역대 최저가 달성!
           </span>
         ) : (
-          <span className="text-[10px] text-red-400 font-medium">
+          <span className="text-[10px] text-rose-300/70 font-medium">
             최저가 대비 +{diffFromMin.toLocaleString()}원
           </span>
         )}
@@ -57,11 +57,11 @@ export default function PriceGauge({ currentPriceStr, stats }: Props) {
           <div className="relative w-full h-1.5 bg-zinc-700/50 rounded-full mt-2">
             <div
               className="absolute top-0 left-0 h-full rounded-full transition-all duration-500 opacity-30"
-              style={{ width: `${percent}%`, backgroundColor: isAllTimeLow ? '#4ade80' : '#f87171' }}
+              style={{ width: `${percent}%`, backgroundColor: isAllTimeLow ? '#7aab8f' : '#b07878' }}
             />
             <div
               className="absolute top-1/2 w-3 h-3 rounded-full border-2 border-zinc-900 shadow-[0_0_8px_rgba(0,0,0,0.5)] transition-all duration-500"
-              style={{ left: `calc(${percent}% - 6px)`, transform: 'translateY(-50%)', backgroundColor: isAllTimeLow ? '#4ade80' : '#f87171' }}
+              style={{ left: `calc(${percent}% - 6px)`, transform: 'translateY(-50%)', backgroundColor: isAllTimeLow ? '#7aab8f' : '#b07878' }}
             />
           </div>
           <div className="flex justify-between mt-1 px-0.5">

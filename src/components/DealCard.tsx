@@ -41,7 +41,7 @@ export default function DealCard({ deal }: Props) {
   }, [deal.url, mallLoading]);
 
   return (
-    <div className="bg-surface-card rounded-2xl overflow-hidden border border-surface-border/50 hover:bg-surface-hover transition-all duration-100">
+    <div className="bg-surface-card rounded-2xl overflow-hidden border border-surface-border/40 hover:bg-surface-hover transition-all duration-150">
 
       {/* 클릭 시 뽐뿌 게시글로 이동 (1·2행) */}
       <a
@@ -81,7 +81,7 @@ export default function DealCard({ deal }: Props) {
               </span>
             )}
             {deal.discountRate && (
-              <span className="text-green-400 text-[10px] font-bold">{deal.discountRate}</span>
+              <span className="text-emerald-400/70 text-[10px] font-bold">{deal.discountRate}</span>
             )}
             <span
               className="text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-auto"
