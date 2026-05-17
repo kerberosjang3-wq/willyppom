@@ -4,6 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import type { Deal } from '@/types/deal';
 import { SOURCE_META } from '@/types/deal';
+import PriceGauge from '@/components/PriceGauge';
 
 interface Props {
   deal: Deal;
@@ -130,6 +131,11 @@ export default function DealCard({ deal }: Props) {
               </span>
             </div>
           </div>
+
+          {/* Price Gauge (Support Line) */}
+          {deal.priceStats && deal.priceStats.historyCount >= 2 && (
+            <PriceGauge currentPriceStr={deal.price} stats={deal.priceStats} />
+          )}
         </div>
       </div>
     </a>

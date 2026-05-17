@@ -1,3 +1,5 @@
+import type { PriceStats } from '@/lib/supabase';
+
 export type SourceId = 'ppomppu' | 'clien' | 'ruliweb' | 'fmkorea';
 
 export type CategoryId =
@@ -31,6 +33,7 @@ export interface Deal {
   publishedAt: string; // ISO string
   description?: string;
   duplicateSources?: { source: SourceId; sourceName: string; url: string }[]; // Links from merged duplicates
+  priceStats?: PriceStats; // Historical price tracking data
 }
 
 export interface DealsResponse {
