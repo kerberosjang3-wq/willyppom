@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import { format, isToday, isThisYear } from 'date-fns';
 import type { Deal } from '@/types/deal';
 import { SOURCE_META } from '@/types/deal';
@@ -20,80 +21,120 @@ export default function DealCard({ deal }: Props) {
       ? format(pubDate, 'MM/dd HH:mm')
       : format(pubDate, 'yy/MM/dd');
 
+  const [mallLoading, setMallLoading] = useState(false);
+
+  const handleMallClick = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (mallLoading) return;
+
+    setMallLoading(true);
+    try {
+      const res  = await fetch(`/api/mall-link?url=${encodeURIComponent(deal.url)}`);
+      const data = await res.json();
+      window.open(data.mallUrl ?? deal.url, '_blank', 'noopener,noreferrer');
+    } catch {
+      window.open(deal.url, '_blank', 'noopener,noreferrer');
+    } finally {
+      setMallLoading(false);
+    }
+  }, [deal.url, mallLoading]);
+
   return (
-    <a
-      href={deal.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block bg-surface-card rounded-2xl overflow-hidden active:scale-[0.98] transition-all duration-100 border border-surface-border/50 hover:bg-surface-hover"
-    >
-      <div className="flex flex-col p-3 gap-1.5">
+    <div className="bg-surface-card rounded-2xl overflow-hidden border border-surface-border/50 hover:bg-surface-hover transition-all duration-100">
 
-        {/* 1행: 상품명 */}
-        <p className="text-[12px] font-medium text-zinc-100 leading-snug line-clamp-2">
-          {deal.mallName && (
-            <span className="text-[10px] text-brand-300 border border-brand-500/30 bg-brand-900/20 px-1 rounded mr-1.5 align-text-bottom">
-              {deal.mallName}
-            </span>
-          )}
-          {deal.productName || deal.title}
-        </p>
+      {/* 클릭 시 뽐뿌 게시글로 이동 (1·2행) */}
+      <a
+        href={deal.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block active:scale-[0.98] transition-transform duration-100 px-3 pt-3 pb-1.5"
+      >
+        <div className="flex flex-col gap-1.5">
 
-        {/* 2행: 가격 + 배송비 + 할인율 + 채널명 */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {deal.price && (
-            <span className="text-brand-400 font-bold text-sm leading-none">{deal.price}</span>
-          )}
-          {deal.shipping && (
-            <span className="text-zinc-400 text-[10px] bg-zinc-800 px-1 rounded leading-none py-0.5">
-              {deal.shipping}
+          {/* 1행: 상품명 */}
+          <p className="text-[12px] font-medium text-zinc-100 leading-snug line-clamp-2">
+            {deal.productName || deal.title}
+          </p>
+
+          {/* 2행: 가격 + 배송비 + 할인율 + 채널명 */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {deal.price && (
+              <span className="text-brand-400 font-bold text-sm leading-none">{deal.price}</span>
+            )}
+            {deal.shipping && (
+              <span className="text-zinc-400 text-[10px] bg-zinc-800 px-1 rounded leading-none py-0.5">
+                {deal.shipping}
+              </span>
+            )}
+            {deal.discountRate && (
+              <span className="text-green-400 text-[10px] font-bold">{deal.discountRate}</span>
+            )}
+            <span
+              className="text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-auto"
+              style={{ color: meta.color, backgroundColor: `${meta.color}15` }}
+            >
+              {deal.sourceName}
             </span>
+          </div>
+
+          {/* Price Gauge */}
+          {deal.priceStats && deal.priceStats.historyCount >= 2 && (
+            <PriceGauge currentPriceStr={deal.price} stats={deal.priceStats} />
           )}
-          {deal.discountRate && (
-            <span className="text-green-400 text-[10px] font-bold">{deal.discountRate}</span>
-          )}
-          <span
-            className="text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-auto"
-            style={{ color: meta.color, backgroundColor: `${meta.color}15` }}
-          >
-            {deal.sourceName}
-          </span>
+
         </div>
+      </a>
 
-        {/* Price Gauge */}
-        {deal.priceStats && deal.priceStats.historyCount >= 2 && (
-          <PriceGauge currentPriceStr={deal.price} stats={deal.priceStats} />
+      {/* 3행: 쇼핑몰 뱃지(클릭 시 실제 쇼핑몰 이동) + HOT / 댓글·좋아요·시간 */}
+      <div className="flex items-center gap-2 px-3 pb-3">
+        {deal.mallName && (
+          <button
+            onClick={handleMallClick}
+            disabled={mallLoading}
+            className="flex items-center gap-1 text-[10px] text-brand-300 border border-brand-500/30 bg-brand-900/20 px-1.5 py-0.5 rounded-md font-semibold hover:bg-brand-900/40 transition-colors disabled:opacity-60"
+          >
+            {mallLoading ? (
+              <svg className="w-2.5 h-2.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+            ) : (
+              <svg className="w-2.5 h-2.5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            )}
+            {deal.mallName}
+          </button>
         )}
 
-        {/* 3행: HOT / 댓글·좋아요·시간(우측) */}
-        <div className="flex items-center gap-2">
-          {isHot && (
-            <span className="bg-brand-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
-              HOT
-            </span>
-          )}
-          <div className="flex items-center gap-2 ml-auto">
-            <span className="text-[10px] text-zinc-500 flex items-center gap-1">
-              <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
-              </svg>
-              {deal.commentCount}
-            </span>
-            <span className="text-[10px] text-zinc-500 flex items-center gap-1">
-              <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                />
-              </svg>
-              {deal.likeCount}
-            </span>
-            <span className="text-[10px] text-zinc-500">{postTime}</span>
-          </div>
-        </div>
+        {isHot && (
+          <span className="bg-brand-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+            HOT
+          </span>
+        )}
 
+        <div className="flex items-center gap-2 ml-auto">
+          <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+            <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+            {deal.commentCount}
+          </span>
+          <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+            <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
+            </svg>
+            {deal.likeCount}
+          </span>
+          <span className="text-[10px] text-zinc-500">{postTime}</span>
+        </div>
       </div>
-    </a>
+
+    </div>
   );
 }
