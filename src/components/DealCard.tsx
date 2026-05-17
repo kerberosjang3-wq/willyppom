@@ -1,7 +1,5 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useInView } from 'react-intersection-observer';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import type { Deal } from '@/types/deal';
@@ -18,88 +16,16 @@ export default function DealCard({ deal }: Props) {
   const timeAgo  = formatDistanceToNow(pubDate, { addSuffix: true, locale: ko });
   const isHot    = deal.hotScore > 60;
   
-  const [ogImage, setOgImage] = useState<string | null>(null);
-  const [imgLoaded, setImgLoaded] = useState(false);
-  const hasAttemptedFetch = useRef(false);
-
-  const { ref, inView } = useInView({
-    triggerOnce: true,
-    rootMargin: '100px 0px', // Fetch slightly before it scrolls into view
-  });
-
-  useEffect(() => {
-    // If we already have a thumbnail, or we already attempted to fetch, or not in view yet, do nothing
-    if (deal.thumbnail || hasAttemptedFetch.current || !inView) return;
-    
-    let isMounted = true;
-    hasAttemptedFetch.current = true;
-
-    async function fetchOg() {
-      try {
-        const res = await fetch(`/api/og?url=${encodeURIComponent(deal.url)}`);
-        const data = await res.json();
-        if (isMounted && data.imageUrl) {
-          setOgImage(data.imageUrl);
-        }
-      } catch (e) {
-        // Silently ignore OG fetch errors
-      }
-    }
-    
-    // Slight delay so we don't spam requests the millisecond the list renders
-    const timer = setTimeout(fetchOg, 100);
-    return () => {
-      isMounted = false;
-      clearTimeout(timer);
-    };
-  }, [deal.thumbnail, deal.url, inView]);
-
-  const displayImage = deal.thumbnail || ogImage;
-  
   return (
     <a
       href={deal.url}
-      ref={ref}
       target="_blank"
       rel="noopener noreferrer"
       className="block bg-surface-card rounded-2xl overflow-hidden active:scale-[0.98] transition-all duration-100 border border-surface-border/50 hover:bg-surface-hover"
     >
       <div className="flex items-center p-3 gap-3">
-        {/* Left: Thumbnail or Placeholder */}
-        <div className="relative shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-surface-border">
-          {displayImage ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={displayImage}
-              alt=""
-              className={`w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
-              loading="lazy"
-              onLoad={() => setImgLoaded(true)}
-              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-2xl bg-gradient-to-br from-zinc-800 to-zinc-900 transition-opacity duration-300">
-              {meta.name[0]}
-            </div>
-          )}
-          
-          {/* Loading state for OG image */}
-          {(!displayImage && !hasAttemptedFetch.current && !deal.thumbnail) && (
-            <div className="absolute inset-0 bg-zinc-800/50 flex items-center justify-center backdrop-blur-sm animate-pulse">
-              <span className="w-4 h-4 border-2 border-zinc-500 border-t-brand-500 rounded-full animate-spin" />
-            </div>
-          )}
-          
-          {/* Hot Badge Overlay */}
-          {isHot && (
-            <div className="absolute top-1 left-1 bg-brand-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-lg shadow-lg">
-              HOT
-            </div>
-          )}
-        </div>
-
-        {/* Right: Info */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between h-20 py-0.5">
+        {/* Info */}
+        <div className="flex-1 min-w-0 flex flex-col gap-1">
           <div>
             {/* Source & Time */}
             <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -109,6 +35,11 @@ export default function DealCard({ deal }: Props) {
               >
                 {deal.sourceName}
               </span>
+              {isHot && (
+                <span className="bg-brand-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+                  HOT
+                </span>
+              )}
               
               {/* Duplicate Sources Badges */}
               {deal.duplicateSources && deal.duplicateSources.length > 0 && (
@@ -144,7 +75,7 @@ export default function DealCard({ deal }: Props) {
           </div>
 
           {/* Price & Stats */}
-          <div className="flex items-end justify-between">
+          <div className="flex items-center justify-between">
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 {deal.price && (

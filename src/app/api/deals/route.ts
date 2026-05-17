@@ -6,7 +6,6 @@ import type { DealsResponse, SourceId, CategoryId, DealsQuery } from '@/types/de
 import { normalizeDeal } from '@/lib/parser';
 import { aggregateDeals } from '@/lib/aggregator';
 import { supabase, parsePriceValue, type PriceStats } from '@/lib/supabase';
-import { extractAndCacheOgImage } from '@/lib/ogExtractor';
 
 const CACHE_KEY = 'deals:all';
 const CACHE_TTL = 20 * 60 * 1000; // 20 minutes
@@ -97,22 +96,6 @@ async function enrichWithPriceStatsAndLog(deals: any[]) {
   return deals;
 }
 
-function prefetchMissingThumbnails(deals: any[]) {
-  const missing = deals.filter(d => !d.thumbnail);
-  if (missing.length === 0) return;
-
-  // Run in background without awaiting, limiting concurrency to avoid spamming
-  Promise.resolve().then(async () => {
-    // Process in batches of 5 to avoid overwhelming the server or sites
-    for (let i = 0; i < missing.length; i += 5) {
-      const batch = missing.slice(i, i + 5);
-      await Promise.allSettled(batch.map(d => extractAndCacheOgImage(d.url)));
-      // Wait 1 second between batches
-      await new Promise(r => setTimeout(r, 1000));
-    }
-  }).catch(err => console.error('Prefetch error:', err));
-}
-
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
 
@@ -152,9 +135,6 @@ export async function GET(req: NextRequest) {
         const aggregated = aggregateDeals(normalized);
         const enriched = await enrichWithPriceStatsAndLog(aggregated);
         
-        // Trigger background prefetching for missing thumbnails
-        prefetchMissingThumbnails(enriched);
-
         response.deals = enriched;
         response.total = enriched.length;
       }
