@@ -26,7 +26,7 @@ export default function DealCard({ deal }: Props) {
       <div className="flex flex-col p-3 gap-1.5">
 
         {/* 1행: 상품명 */}
-        <p className="text-sm font-medium text-zinc-100 leading-snug line-clamp-2">
+        <p className="text-[12px] font-medium text-zinc-100 leading-snug line-clamp-2">
           {deal.mallName && (
             <span className="text-[10px] text-brand-300 border border-brand-500/30 bg-brand-900/20 px-1 rounded mr-1.5 align-text-bottom">
               {deal.mallName}
