@@ -7,6 +7,24 @@ const BOARD_URL = 'https://m.ppomppu.co.kr/new/bbs_list.php?id=ppomppu&hotlist_f
 const BASE_URL  = 'https://m.ppomppu.co.kr';
 const TIMEOUT   = 10_000;
 
+// 뽐뿌 시간 문자열을 ISO로 변환 (KST 기준)
+// 오늘 글: "HH:mm:ss" → 오늘 날짜 + 해당 시각 (KST)
+// 이전 날: "YY/MM/DD" → 해당 날짜 정오 (KST)
+function parsePostTime(raw: string): string {
+  const timeOnly = raw.match(/^(\d{2}):(\d{2}):(\d{2})$/);
+  if (timeOnly) {
+    const nowKST   = new Date(Date.now() + 9 * 3600_000);
+    const datePart = nowKST.toISOString().slice(0, 10); // YYYY-MM-DD
+    return new Date(`${datePart}T${raw}+09:00`).toISOString();
+  }
+  const dateOnly = raw.match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
+  if (dateOnly) {
+    const [, yy, mm, dd] = dateOnly;
+    return new Date(`20${yy}-${mm}-${dd}T12:00:00+09:00`).toISOString();
+  }
+  return new Date().toISOString();
+}
+
 export async function scrapePpomppu(): Promise<Deal[]> {
   try {
     const res = await axios.get(BOARD_URL, {
@@ -52,6 +70,9 @@ export async function scrapePpomppu(): Promise<Deal[]> {
       const commentCount = safeNumber(commText.replace(/[^\d]/g, ''));
       const likeCount    = safeNumber(likeText.replace(/[^\d]/g, ''));
 
+      const rawTime   = $(el).find('time').first().text().trim();
+      const publishedAt = rawTime ? parsePostTime(rawTime) : now.toISOString();
+
       deals.push({
         id:           makeId('ppomppu', url.split('no=')[1]?.split('&')[0] ?? String(i)),
         title,
@@ -63,7 +84,7 @@ export async function scrapePpomppu(): Promise<Deal[]> {
         commentCount,
         likeCount,
         hotScore:     calcHotScore(commentCount, likeCount, 2),
-        publishedAt:  now.toISOString(),
+        publishedAt,
       });
     });
 

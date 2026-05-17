@@ -1,7 +1,6 @@
 'use client';
 
-import { formatDistanceToNow } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import { format, isToday, isThisYear } from 'date-fns';
 import type { Deal } from '@/types/deal';
 import { SOURCE_META } from '@/types/deal';
 import PriceGauge from '@/components/PriceGauge';
@@ -13,8 +12,13 @@ interface Props {
 export default function DealCard({ deal }: Props) {
   const meta    = SOURCE_META[deal.source];
   const pubDate = new Date(deal.publishedAt);
-  const timeAgo = formatDistanceToNow(pubDate, { addSuffix: true, locale: ko });
   const isHot   = deal.hotScore > 60;
+
+  const postTime = isToday(pubDate)
+    ? format(pubDate, 'HH:mm')
+    : isThisYear(pubDate)
+      ? format(pubDate, 'MM/dd HH:mm')
+      : format(pubDate, 'yy/MM/dd');
 
   return (
     <a
@@ -85,7 +89,7 @@ export default function DealCard({ deal }: Props) {
               </svg>
               {deal.likeCount}
             </span>
-            <span className="text-[10px] text-zinc-500">{timeAgo}</span>
+            <span className="text-[10px] text-zinc-500">{postTime}</span>
           </div>
         </div>
 
