@@ -3,7 +3,7 @@ import * as cheerio from 'cheerio';
 import type { Deal } from '@/types/deal';
 import { detectCategory, calcHotScore, makeId, safeNumber } from './utils';
 
-const BOARD_URL = 'https://m.ppomppu.co.kr/new/bbs_list.php?id=ppomppu';
+const BOARD_URL = 'https://m.ppomppu.co.kr/new/bbs_list.php?id=ppomppu&hotlist_flag=999';
 const BASE_URL  = 'https://m.ppomppu.co.kr';
 const TIMEOUT   = 10_000;
 
