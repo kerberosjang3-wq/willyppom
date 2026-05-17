@@ -15,6 +15,13 @@ export function getCache<T>(key: string): T | null {
   return entry.data as T;
 }
 
+// Returns data even if expired (for stale-while-revalidate pattern)
+export function getCacheWithMeta<T>(key: string): { data: T; isStale: boolean } | null {
+  const entry = store.get(key);
+  if (!entry) return null;
+  return { data: entry.data as T, isStale: Date.now() > entry.expiry };
+}
+
 export function setCache<T>(key: string, data: T, ttlMs: number): void {
   store.set(key, { data, expiry: Date.now() + ttlMs });
 }

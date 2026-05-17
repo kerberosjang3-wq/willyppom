@@ -31,12 +31,16 @@ interface FeedResponse {
 const AUTO_REFRESH_MS  = 5 * 60 * 1000;
 const PULL_THRESHOLD   = 64;
 
-export default function DealFeed() {
-  const [deals, setDeals]           = useState<Deal[]>([]);
-  const [total, setTotal]           = useState(0);
+interface Props {
+  initialDeals?: Deal[];
+}
+
+export default function DealFeed({ initialDeals = [] }: Props) {
+  const [deals, setDeals]           = useState<Deal[]>(() => prioritySort(initialDeals));
+  const [total, setTotal]           = useState(initialDeals.length);
   const [page, setPage]             = useState(1);
-  const [hasMore, setHasMore]       = useState(false);
-  const [loading, setLoading]       = useState(true);
+  const [hasMore, setHasMore]       = useState(initialDeals.length === 20);
+  const [loading, setLoading]       = useState(initialDeals.length === 0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>();
   const [error, setError]           = useState<string>();
@@ -45,8 +49,9 @@ export default function DealFeed() {
   const [sort, setSort]             = useState<'view' | 'date' | 'comment'>('view');
   const [searchQuery, setSearchQuery] = useState('');
   const [showKeywords, setShowKeywords] = useState(false);
-  const prevDealIdsRef = useRef<Set<string>>(new Set());
+  const prevDealIdsRef = useRef<Set<string>>(new Set(initialDeals.map(d => d.id)));
   const [keywords, setKeywords]     = useState<string[]>([]);
+  const isInitialMount = useRef(true);
 
   const sentinelRef    = useRef<HTMLDivElement>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -107,7 +112,15 @@ export default function DealFeed() {
   }, [buildUrl, loadingMore, hasMore, page, searchQuery]);
 
   // Initial fetch + re-fetch when filters change
-  useEffect(() => { fetchDeals(); }, [category, sort]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Skip initial fetch when SSR data already populated
+  useEffect(() => {
+    if (isInitialMount.current && initialDeals.length > 0) {
+      isInitialMount.current = false;
+      return;
+    }
+    isInitialMount.current = false;
+    fetchDeals();
+  }, [category, sort]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Debounced search
   useEffect(() => {
