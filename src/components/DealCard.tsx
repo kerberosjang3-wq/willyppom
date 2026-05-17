@@ -59,7 +59,7 @@ export default function DealCard({ deal }: Props) {
               src={deal.thumbnail}
               alt=""
               referrerPolicy="no-referrer"
-              className="shrink-0 w-12 h-12 rounded-lg object-cover bg-zinc-800"
+              className="shrink-0 w-8 h-8 rounded-md object-cover bg-zinc-800"
             />
           )}
 
