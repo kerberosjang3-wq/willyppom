@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useInView } from 'react-intersection-observer';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import type { Deal } from '@/types/deal';
@@ -21,9 +22,14 @@ export default function DealCard({ deal }: Props) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const hasAttemptedFetch = useRef(false);
 
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    rootMargin: '100px 0px', // Fetch slightly before it scrolls into view
+  });
+
   useEffect(() => {
-    // If we already have a thumbnail, or we already attempted to fetch, do nothing
-    if (deal.thumbnail || hasAttemptedFetch.current) return;
+    // If we already have a thumbnail, or we already attempted to fetch, or not in view yet, do nothing
+    if (deal.thumbnail || hasAttemptedFetch.current || !inView) return;
     
     let isMounted = true;
     hasAttemptedFetch.current = true;
@@ -41,18 +47,19 @@ export default function DealCard({ deal }: Props) {
     }
     
     // Slight delay so we don't spam requests the millisecond the list renders
-    const timer = setTimeout(fetchOg, 300);
+    const timer = setTimeout(fetchOg, 100);
     return () => {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [deal.thumbnail, deal.url]);
+  }, [deal.thumbnail, deal.url, inView]);
 
   const displayImage = deal.thumbnail || ogImage;
   
   return (
     <a
       href={deal.url}
+      ref={ref}
       target="_blank"
       rel="noopener noreferrer"
       className="block bg-surface-card rounded-2xl overflow-hidden active:scale-[0.98] transition-all duration-100 border border-surface-border/50 hover:bg-surface-hover"

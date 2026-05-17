@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import { supabase } from '@/lib/supabase';
 
 const CACHE_TTL = 86400; // 24 hours
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -42,6 +43,21 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    // 1. Check Supabase Cache first
+    if (supabase) {
+      const { data: cacheData } = await supabase
+        .from('og_cache')
+        .select('image_url')
+        .eq('url', targetUrl)
+        .single();
+      
+      if (cacheData) {
+        const response = NextResponse.json({ imageUrl: cacheData.image_url });
+        response.headers.set('Cache-Control', `public, s-maxage=${CACHE_TTL}, stale-while-revalidate=86400`);
+        return response;
+      }
+    }
+
     const html = await fetchHtml(targetUrl, 4000);
     const $ = cheerio.load(html);
     
@@ -96,6 +112,20 @@ export async function GET(req: NextRequest) {
     // Nullify if it's still an ignored logo
     if (isIgnoredImage(imageUrl)) {
       imageUrl = undefined;
+    }
+
+    // Save to cache asynchronously if supabase exists
+    if (supabase) {
+      (async () => {
+        try {
+          await supabase.from('og_cache').insert({
+            url: targetUrl,
+            image_url: imageUrl || null
+          });
+        } catch (err) {
+          console.error('OG Cache insert error', err);
+        }
+      })();
     }
 
     const response = NextResponse.json({ imageUrl: imageUrl || null });
