@@ -4,7 +4,7 @@ import { getCache, setCache } from '@/lib/cache';
 import { MOCK_DEALS } from '@/lib/mockDeals';
 import type { DealsResponse, CategoryId } from '@/types/deal';
 import { normalizeDeal } from '@/lib/parser';
-import { aggregateDeals } from '@/lib/aggregator';
+import { aggregateDeals, buildMatchKey } from '@/lib/aggregator';
 import { supabase, parsePriceValue, type PriceStats } from '@/lib/supabase';
 
 const CACHE_KEY = 'deals:all';
@@ -14,44 +14,26 @@ async function enrichWithPriceStatsAndLog(deals: any[]) {
   if (!supabase) return deals;
 
   try {
-    // Collect all match keys
-    const matchKeys = deals.map(d => {
-      // Recreate matchKey exactly as in aggregator.ts
-      const getBaseKey = (text: string) => text.toLowerCase().replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '');
-      const mallKey = d.mallName ? getBaseKey(d.mallName).replace('알리', '알리익스프레스').replace(/지마켓|g마켓/, '지마켓') : 'unknown';
-      const productKey = getBaseKey(d.productName);
-      const finalProductKey = productKey.length > 3 ? productKey : getBaseKey(d.title);
-      return `${mallKey}-${finalProductKey}`;
-    });
+    const matchKeys = deals.map(d => buildMatchKey(d));
 
-    // We can fetch historical stats for all these keys
-    // For simplicity and performance, we'll just log them async and fetch stats for those with prices.
-    const priceInsertPromises = deals.map(async (d, i) => {
-      const pVal = parsePriceValue(d.price);
-      if (pVal !== null) {
-        try {
-          await supabase!.from('price_history').insert({
-            match_key: matchKeys[i],
-            price_value: pVal,
-            price_str: d.price,
-            source: d.source,
-          });
-        } catch (err) {
-          console.error('Supabase insert error', err);
-        }
-      }
-    });
-
-    // In a production app, we would run an RPC function to get stats for multiple keys at once.
-    // Since we're just setting this up, let's fetch stats for the first few deals or just fetch all grouped by match_key if possible.
-    // To keep it simple, we will query all history for these keys.
+    // Query existing history first, then insert current prices in background
     const { data: historyData } = await supabase
       .from('price_history')
       .select('match_key, price_value, price_str')
       .in('match_key', matchKeys);
 
+    // Fire-and-forget inserts — wrapped in Promise.resolve so .catch() is available
+    deals.forEach((d, i) => {
+      const pVal = parsePriceValue(d.price);
+      if (pVal === null) return;
+      void Promise.resolve(
+        supabase!.from('price_history').insert({
+          match_key: matchKeys[i], price_value: pVal, price_str: d.price, source: d.source,
+        })
+      ).catch((err: unknown) => console.error('[price insert]', err));
+    });
+
     if (historyData) {
-      // Group by match_key
       const statsMap: Record<string, PriceStats> = {};
       historyData.forEach(row => {
         if (!statsMap[row.match_key]) {
@@ -61,36 +43,30 @@ async function enrichWithPriceStatsAndLog(deals: any[]) {
             avgPrice: 0,
             historyCount: 0,
             isAllTimeLow: false,
-            minPriceStr: row.price_str
+            minPriceStr: row.price_str,
           };
         }
         const st = statsMap[row.match_key];
-        st.minPrice = Math.min(st.minPrice, row.price_value);
-        st.maxPrice = Math.max(st.maxPrice, row.price_value);
-        st.avgPrice += row.price_value;
-        st.historyCount += 1;
-        if (row.price_value === st.minPrice) {
-            st.minPriceStr = row.price_str;
+        if (row.price_value < st.minPrice) {
+          st.minPrice    = row.price_value;
+          st.minPriceStr = row.price_str;
         }
+        if (row.price_value > st.maxPrice) st.maxPrice = row.price_value;
+        st.avgPrice   += row.price_value;
+        st.historyCount++;
       });
 
-      // Assign stats back to deals
       deals.forEach((d, i) => {
         const st = statsMap[matchKeys[i]];
-        if (st && st.historyCount > 0) {
-          st.avgPrice = Math.round(st.avgPrice / st.historyCount);
-          const currentVal = parsePriceValue(d.price);
-          st.isAllTimeLow = currentVal !== null && currentVal <= st.minPrice;
-          d.priceStats = st;
-        }
+        if (!st || st.historyCount === 0) return;
+        st.avgPrice = Math.round(st.avgPrice / st.historyCount);
+        const currentVal = parsePriceValue(d.price);
+        st.isAllTimeLow = currentVal !== null && currentVal <= st.minPrice;
+        d.priceStats = st;
       });
     }
-
-    // Await inserts to finish in background
-    Promise.allSettled(priceInsertPromises);
-
-  } catch (err) {
-    console.error('Supabase enrich error', err);
+  } catch (err: unknown) {
+    console.error('[enrich] Supabase error', err);
   }
 
   return deals;
@@ -129,8 +105,8 @@ export async function GET(req: NextRequest) {
         response.total = enriched.length;
       }
       setCache(CACHE_KEY, response, CACHE_TTL);
-    } catch (err: any) {
-      console.error(err);
+    } catch (err: unknown) {
+      console.error('[deals route]', err);
       response = {
         deals: MOCK_DEALS.map(d => ({...d, productName: d.title})),
         total: MOCK_DEALS.length,

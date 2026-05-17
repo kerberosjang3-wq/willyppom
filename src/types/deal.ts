@@ -35,6 +35,7 @@ export interface Deal {
   description?: string;
   duplicateSources?: { source: SourceId; sourceName: string; url: string }[]; // Links from merged duplicates
   priceStats?: PriceStats; // Historical price tracking data
+  isSoldOut?: boolean;    // Detected from title keywords or board markers
 }
 
 export interface DealsResponse {

@@ -7,6 +7,14 @@ const BOARD_URL = 'https://m.ppomppu.co.kr/new/bbs_list.php?id=ppomppu&hotlist_f
 const BASE_URL  = 'https://m.ppomppu.co.kr';
 const TIMEOUT   = 10_000;
 
+const SOLD_OUT_KEYWORDS = /[\[(（]?(마감|품절|종료|판매종료|sold\s*out)[\])）]?/i;
+
+function detectSoldOut(title: string, liClasses: string): boolean {
+  if (SOLD_OUT_KEYWORDS.test(title)) return true;
+  // 뽐뿌는 마감 항목 li에 'end' 클래스 추가
+  return /\bend\b/.test(liClasses);
+}
+
 // 뽐뿌 시간 문자열을 ISO로 변환 (KST 기준)
 // 오늘 글: "HH:mm:ss" → 오늘 날짜 + 해당 시각 (KST)
 // 이전 날: "YY/MM/DD" → 해당 날짜 정오 (KST)
@@ -75,6 +83,9 @@ export async function scrapePpomppu(): Promise<Deal[]> {
       const rawTime   = $(el).find('time').first().text().trim();
       const publishedAt = rawTime ? parsePostTime(rawTime) : now.toISOString();
 
+      const liClasses = $(el).attr('class') ?? '';
+      const isSoldOut = detectSoldOut(title, liClasses);
+
       deals.push({
         id:           makeId('ppomppu', url.split('no=')[1]?.split('&')[0] ?? String(i)),
         title,
@@ -88,6 +99,7 @@ export async function scrapePpomppu(): Promise<Deal[]> {
         viewCount,
         hotScore:     calcHotScore(commentCount, likeCount, 2),
         publishedAt,
+        isSoldOut:    isSoldOut || undefined,
       });
     });
 

@@ -1,7 +1,6 @@
 import type { Deal } from '@/types/deal';
 
 function getBaseKey(text: string): string {
-  // Remove whitespace and special characters, keep alphanumeric and Korean
   return text.toLowerCase().replace(/[^\w\s가-힣]/g, '').replace(/\s+/g, '');
 }
 
@@ -13,22 +12,21 @@ function normalizeMallKey(mall: string): string {
   return key;
 }
 
+export function buildMatchKey(deal: Pick<Deal, 'mallName' | 'productName' | 'title'>): string {
+  const mallKey = deal.mallName ? normalizeMallKey(deal.mallName) : 'unknown';
+  const productKey = getBaseKey(deal.productName || deal.title);
+  const finalProductKey = productKey.length > 3 ? productKey : getBaseKey(deal.title);
+  return `${mallKey}-${finalProductKey}`;
+}
+
 export function aggregateDeals(deals: Deal[]): Deal[] {
   const aggregated: Record<string, Deal> = {};
   const mergedList: Deal[] = [];
 
-  // Sort deals by hotScore descending first, so the base deal is always the "hottest" one
   const sortedDeals = [...deals].sort((a, b) => b.hotScore - a.hotScore);
 
   for (const deal of sortedDeals) {
-    // Generate a matching key based on mallName and simplified productName
-    const mallKey = deal.mallName ? normalizeMallKey(deal.mallName) : 'unknown';
-    const productKey = getBaseKey(deal.productName || deal.title);
-    
-    // Fallback to original title if productKey is too short (to avoid merging unrelated items)
-    const finalProductKey = productKey.length > 3 ? productKey : getBaseKey(deal.title);
-
-    const matchKey = `${mallKey}-${finalProductKey}`;
+    const matchKey = buildMatchKey(deal);
 
     if (aggregated[matchKey]) {
       // Merge into existing deal

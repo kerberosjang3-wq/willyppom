@@ -15,7 +15,8 @@ interface FeedResponse {
   lastUpdated: string;
 }
 
-const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 minutes
+const AUTO_REFRESH_MS  = 5 * 60 * 1000;
+const PULL_THRESHOLD   = 64;
 
 export default function DealFeed() {
   const [deals, setDeals]           = useState<Deal[]>([]);
@@ -39,8 +40,6 @@ export default function DealFeed() {
   const touchStartY  = useRef(0);
   const pullYRef     = useRef(0);
   const fetchDealsRef = useRef<(opts?: { refresh?: boolean }) => Promise<void>>();
-
-  const PULL_THRESHOLD = 64;
 
   const buildUrl = useCallback((p: number, q?: string, refresh = false) => {
     const params = new URLSearchParams();
@@ -155,8 +154,6 @@ export default function DealFeed() {
   return (
     <div className="min-h-screen bg-surface text-zinc-100">
       <Header
-        onRefresh={() => fetchDeals({ refresh: true })}
-        loading={loading}
         lastUpdated={lastUpdated}
         total={total}
         searchQuery={searchQuery}

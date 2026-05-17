@@ -33,6 +33,9 @@ module.exports = {
           'Noto Sans KR', 'sans-serif',
         ],
       },
+      opacity: {
+        '55': '0.55',
+      },
       animation: {
         'fade-in':   'fadeIn 0.3s ease-in-out',
         'slide-up':  'slideUp 0.3s ease-out',

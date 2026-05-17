@@ -54,7 +54,7 @@ export function extractPrice(title: string): string | undefined {
   return undefined;
 }
 
-export function cleanTitle(title: string, mall?: string, price?: string, shipping?: string): string {
+export function cleanTitle(title: string, mall?: string): string {
   let cleaned = title;
 
   // Remove bracketed mall name if it matches
@@ -86,7 +86,7 @@ export function normalizeDeal(deal: Deal): Deal {
   const mallName = extractMall(deal.title);
   const shipping = extractShipping(deal.title);
   const price = deal.price || extractPrice(deal.title); // Use already extracted price if available, else try from title
-  const productName = cleanTitle(deal.title, mallName, price, shipping);
+  const productName = cleanTitle(deal.title, mallName);
 
   return {
     ...deal,

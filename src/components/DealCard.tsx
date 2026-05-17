@@ -5,6 +5,7 @@ import { format, isToday, isThisYear } from 'date-fns';
 import type { Deal } from '@/types/deal';
 import { SOURCE_META } from '@/types/deal';
 import PriceGauge from '@/components/PriceGauge';
+import { useReadDeal } from '@/hooks/useReadDeal';
 
 interface Props {
   deal: Deal;
@@ -14,6 +15,7 @@ export default function DealCard({ deal }: Props) {
   const meta    = SOURCE_META[deal.source];
   const pubDate = new Date(deal.publishedAt);
   const isHot   = deal.hotScore > 60;
+  const soldOut = deal.isSoldOut ?? false;
 
   const postTime = isToday(pubDate)
     ? format(pubDate, 'HH:mm')
@@ -21,6 +23,7 @@ export default function DealCard({ deal }: Props) {
       ? format(pubDate, 'MM/dd HH:mm')
       : format(pubDate, 'yy/MM/dd');
 
+  const { isRead, markRead } = useReadDeal(deal.id);
   const [mallLoading, setMallLoading] = useState(false);
 
   const handleMallClick = useCallback(async (e: React.MouseEvent) => {
@@ -28,6 +31,7 @@ export default function DealCard({ deal }: Props) {
     e.stopPropagation();
     if (mallLoading) return;
 
+    markRead();
     setMallLoading(true);
     try {
       const res  = await fetch(`/api/mall-link?url=${encodeURIComponent(deal.url)}`);
@@ -38,16 +42,17 @@ export default function DealCard({ deal }: Props) {
     } finally {
       setMallLoading(false);
     }
-  }, [deal.url, mallLoading]);
+  }, [deal.url, mallLoading, markRead]);
 
   return (
-    <div className="bg-surface-card rounded-2xl overflow-hidden border border-surface-border/40 hover:bg-surface-hover transition-all duration-150">
+    <div className={`bg-surface-card rounded-2xl overflow-hidden border border-surface-border/40 hover:bg-surface-hover transition-all duration-150 ${soldOut ? 'opacity-50' : isRead ? 'opacity-55' : ''}`}>
 
       {/* 클릭 시 뽐뿌 게시글로 이동 (1·2행) */}
       <a
         href={deal.url}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={markRead}
         className="block active:scale-[0.98] transition-transform duration-100 px-3 pt-3 pb-1.5"
       >
         <div className="flex gap-2.5">
@@ -132,7 +137,12 @@ export default function DealCard({ deal }: Props) {
           </span>
         )}
 
-        {isHot && (
+        {soldOut && (
+          <span className="bg-zinc-700 text-zinc-300 text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+            마감
+          </span>
+        )}
+        {!soldOut && isHot && (
           <span className="bg-brand-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
             HOT
           </span>
