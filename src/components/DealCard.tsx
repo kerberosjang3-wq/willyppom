@@ -92,7 +92,7 @@ export default function DealCard({ deal }: Props) {
           </div>
 
           {/* Price Gauge */}
-          {deal.priceStats && deal.priceStats.historyCount >= 2 && (
+          {deal.priceStats && deal.priceStats.historyCount >= 1 && (
             <PriceGauge currentPriceStr={deal.price} stats={deal.priceStats} />
           )}
 

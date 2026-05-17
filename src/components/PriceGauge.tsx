@@ -8,7 +8,7 @@ interface Props {
 
 export default function PriceGauge({ currentPriceStr, stats }: Props) {
   if (!stats || !currentPriceStr) return null;
-  if (stats.historyCount < 2) return null; // Only show if we have enough history
+  if (stats.historyCount < 1) return null;
 
   const currentVal = parsePriceValue(currentPriceStr);
   if (currentVal === null) return null;
@@ -51,30 +51,25 @@ export default function PriceGauge({ currentPriceStr, stats }: Props) {
         )}
       </div>
 
-      {/* Gauge Design: A line with a dot */}
-      <div className="relative w-full h-1.5 bg-zinc-700/50 rounded-full mt-2">
-        {/* Fill from min to current */}
-        <div 
-          className="absolute top-0 left-0 h-full rounded-full transition-all duration-500 opacity-30"
-          style={{ 
-            width: `${percent}%`,
-            backgroundColor: isAllTimeLow ? '#4ade80' : '#f87171'
-          }}
-        />
-        {/* Dot indicator */}
-        <div 
-          className="absolute top-1/2 w-3 h-3 rounded-full border-2 border-zinc-900 shadow-[0_0_8px_rgba(0,0,0,0.5)] transition-all duration-500"
-          style={{ 
-            left: `calc(${percent}% - 6px)`,
-            transform: 'translateY(-50%)',
-            backgroundColor: isAllTimeLow ? '#4ade80' : '#f87171'
-          }}
-        />
-      </div>
-      <div className="flex justify-between mt-1 px-0.5">
-        <span className="text-[9px] text-zinc-500 font-medium">최저가</span>
-        <span className="text-[9px] text-zinc-500 font-medium">최고가</span>
-      </div>
+      {/* 이력 2개 이상일 때만 게이지 표시 */}
+      {stats.historyCount >= 2 && (
+        <>
+          <div className="relative w-full h-1.5 bg-zinc-700/50 rounded-full mt-2">
+            <div
+              className="absolute top-0 left-0 h-full rounded-full transition-all duration-500 opacity-30"
+              style={{ width: `${percent}%`, backgroundColor: isAllTimeLow ? '#4ade80' : '#f87171' }}
+            />
+            <div
+              className="absolute top-1/2 w-3 h-3 rounded-full border-2 border-zinc-900 shadow-[0_0_8px_rgba(0,0,0,0.5)] transition-all duration-500"
+              style={{ left: `calc(${percent}% - 6px)`, transform: 'translateY(-50%)', backgroundColor: isAllTimeLow ? '#4ade80' : '#f87171' }}
+            />
+          </div>
+          <div className="flex justify-between mt-1 px-0.5">
+            <span className="text-[9px] text-zinc-500 font-medium">최저가</span>
+            <span className="text-[9px] text-zinc-500 font-medium">최고가</span>
+          </div>
+        </>
+      )}
     </div>
   );
 }
