@@ -100,7 +100,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
 
   const category  = (searchParams.get('category') ?? 'all') as CategoryId;
-  const sort      = (searchParams.get('sort') ?? 'hot') as 'hot' | 'new';
+  const sort      = (searchParams.get('sort') ?? 'view') as 'view' | 'date' | 'comment';
   const page      = Math.max(1, parseInt(searchParams.get('page') ?? '1'));
   const limit     = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') ?? '20')));
   const q         = searchParams.get('q')?.trim().toLowerCase() ?? '';
@@ -156,10 +156,12 @@ export async function GET(req: NextRequest) {
   }
 
   // Sort
-  if (sort === 'new') {
+  if (sort === 'date') {
     deals.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  } else if (sort === 'comment') {
+    deals.sort((a, b) => b.commentCount - a.commentCount);
   } else {
-    deals.sort((a, b) => b.hotScore - a.hotScore);
+    deals.sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0));
   }
 
   // Paginate

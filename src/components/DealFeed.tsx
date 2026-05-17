@@ -28,7 +28,7 @@ export default function DealFeed() {
   const [error, setError]           = useState<string>();
 
   const [category, setCategory]     = useState<CategoryId>('all');
-  const [sort, setSort]             = useState<'hot' | 'new'>('hot');
+  const [sort, setSort]             = useState<'view' | 'date' | 'comment'>('view');
   const [searchQuery, setSearchQuery] = useState('');
 
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -122,7 +122,7 @@ export default function DealFeed() {
         activeCategory={category}
         activeSort={sort}
         onCategory={c => { setCategory(c); }}
-        onSort={s => setSort(s)}
+        onSort={(s: 'view' | 'date' | 'comment') => setSort(s)}
       />
 
       <main className="px-4 pb-8">

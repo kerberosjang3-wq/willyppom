@@ -3,11 +3,19 @@
 import type { CategoryId } from '@/types/deal';
 import { CATEGORY_META } from '@/types/deal';
 
+type SortId = 'view' | 'date' | 'comment';
+
+const SORT_OPTIONS: { id: SortId; label: string }[] = [
+  { id: 'view',    label: '조회순' },
+  { id: 'date',    label: '등록순' },
+  { id: 'comment', label: '댓글순' },
+];
+
 interface Props {
   activeCategory: CategoryId;
-  activeSort: 'hot' | 'new';
+  activeSort: SortId;
   onCategory: (c: CategoryId) => void;
-  onSort:     (s: 'hot' | 'new') => void;
+  onSort:     (s: SortId) => void;
 }
 
 const CATEGORIES = Object.entries(CATEGORY_META) as [CategoryId, { name: string; emoji: string }][];
@@ -35,18 +43,18 @@ export default function FilterBar({ activeCategory, activeSort, onCategory, onSo
 
       {/* Sort row */}
       <div className="flex items-center gap-2 px-4 pb-2.5">
-        <div className="flex items-center bg-surface-card rounded-full p-0.5">
-          {(['hot', 'new'] as const).map(s => (
+        <div className="flex items-center bg-surface-card rounded-full p-0.5 gap-0.5">
+          {SORT_OPTIONS.map(({ id, label }) => (
             <button
-              key={s}
-              onClick={() => onSort(s)}
+              key={id}
+              onClick={() => onSort(id)}
               className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-150 ${
-                activeSort === s
+                activeSort === id
                   ? 'bg-surface-hover text-zinc-100'
-                  : 'text-zinc-500'
+                  : 'text-zinc-500 hover:text-zinc-400'
               }`}
             >
-              {s === 'hot' ? '🔥 인기' : '🕐 최신'}
+              {label}
             </button>
           ))}
         </div>

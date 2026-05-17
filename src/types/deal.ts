@@ -49,7 +49,7 @@ export interface DealsQuery {
   category?: CategoryId;
   page?: number;
   limit?: number;
-  sort?: 'hot' | 'new';
+  sort?: 'view' | 'date' | 'comment';
   q?: string;
 }
 
