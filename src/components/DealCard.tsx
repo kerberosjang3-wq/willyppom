@@ -50,7 +50,19 @@ export default function DealCard({ deal }: Props) {
         rel="noopener noreferrer"
         className="block active:scale-[0.98] transition-transform duration-100 px-3 pt-3 pb-1.5"
       >
-        <div className="flex flex-col gap-1.5">
+        <div className="flex gap-2.5">
+
+          {/* 썸네일 */}
+          {deal.thumbnail && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={deal.thumbnail}
+              alt=""
+              className="shrink-0 w-12 h-12 rounded-lg object-cover bg-zinc-800"
+            />
+          )}
+
+          <div className="flex flex-col gap-1.5 flex-1 min-w-0">
 
           {/* 1행: 상품명 */}
           <p className="text-[12px] font-medium text-zinc-100 leading-snug line-clamp-2">
@@ -83,6 +95,7 @@ export default function DealCard({ deal }: Props) {
             <PriceGauge currentPriceStr={deal.price} stats={deal.priceStats} />
           )}
 
+          </div>
         </div>
       </a>
 
@@ -103,7 +116,7 @@ export default function DealCard({ deal }: Props) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
           )}
-          쇼핑몰 이동
+          {deal.mallName ?? '쇼핑몰 이동'}
         </button>
 
         {isHot && (
