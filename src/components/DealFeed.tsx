@@ -241,7 +241,7 @@ export default function DealFeed({ initialDeals = [] }: Props) {
         )}
 
         {!loading && (
-          <div className="mt-4 space-y-2 animate-fade-in">
+          <div className="mt-4 space-y-3 animate-fade-in">
             {deals.map(deal => <DealCard key={deal.id} deal={deal} />)}
           </div>
         )}

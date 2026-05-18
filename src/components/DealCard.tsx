@@ -29,8 +29,10 @@ export default function DealCard({ deal }: Props) {
   const { isRead, markRead }     = useReadDeal(deal.id);
   const { isBookmarked, toggle } = useBookmark(deal.id);
   const [mallLoading, setMallLoading] = useState(false);
+  const [mallVisited, setMallVisited] = useState(false);
 
   const [commentsOpen, setCommentsOpen]   = useState(false);
+  const [commentsViewed, setCommentsViewed] = useState(false);
   const [comments, setComments]           = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsError, setCommentsError] = useState(false);
@@ -40,6 +42,7 @@ export default function DealCard({ deal }: Props) {
     e.stopPropagation();
     if (mallLoading) return;
     markRead();
+    setMallVisited(true);
     setMallLoading(true);
     try {
       const res  = await fetch(`/api/mall-link?url=${encodeURIComponent(deal.url)}`);
@@ -62,6 +65,7 @@ export default function DealCard({ deal }: Props) {
     }
 
     setCommentsOpen(true);
+    setCommentsViewed(true);
 
     if (comments.length > 0) return; // already loaded
 
@@ -81,7 +85,13 @@ export default function DealCard({ deal }: Props) {
   const opacityClass = soldOut ? 'opacity-50' : isRead ? 'opacity-55' : '';
 
   return (
-    <div className={`bg-surface-card rounded-2xl overflow-hidden border border-surface-border/40 hover:bg-surface-hover transition-all duration-150 ${opacityClass}`}>
+    <div
+      className={`bg-surface-card rounded-2xl overflow-hidden border border-surface-border/40 hover:bg-surface-hover transition-all duration-150 border-l-[3px] ${opacityClass}`}
+      style={{
+        borderLeftColor: meta.color,
+        boxShadow: `0 2px 10px rgba(0,0,0,0.35), 0 0 0 0 transparent`,
+      }}
+    >
 
       {/* 1·2행: 뽐뿌 게시글 링크 */}
       <a
@@ -170,7 +180,11 @@ export default function DealCard({ deal }: Props) {
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
             </svg>
           ) : (
-            <svg className="w-2.5 h-2.5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+            <svg
+              className="w-2.5 h-2.5 opacity-70"
+              style={!mallVisited ? { animation: 'nudge 1.8s ease-in-out infinite' } : undefined}
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
           )}
@@ -215,7 +229,7 @@ export default function DealCard({ deal }: Props) {
           >
             <svg
               className="w-3 h-3 opacity-60"
-              style={deal.commentCount > 0 && !commentsOpen ? { animation: 'breathe 2.4s ease-in-out infinite' } : undefined}
+              style={deal.commentCount > 0 && !commentsViewed ? { animation: 'breathe 2.4s ease-in-out infinite' } : undefined}
               fill="none" stroke="currentColor" viewBox="0 0 24 24"
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
