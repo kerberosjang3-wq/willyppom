@@ -45,11 +45,18 @@ export function extractShipping(title: string): string | undefined {
 }
 
 export function extractPrice(title: string): string | undefined {
+  // 명시적 "원" 패턴: 16,900원
   const wonMatch = title.match(/[\d,]+\s*원/);
   if (wonMatch) return wonMatch[0].trim();
 
+  // 달러 패턴
   const dollarMatch = title.match(/\$\s*[\d,.]+/);
   if (dollarMatch) return dollarMatch[0].trim();
+
+  // 괄호 안 가격 패턴: (16,900/무배) 또는 제목이 잘린 (16,900...
+  // [\d,]{4,} → 최소 4자리 이상(1,000 이상)만 가격으로 간주
+  const parenMatch = title.match(/\(([\d,]{4,})(?:\/|\.\.\.|\))/);
+  if (parenMatch) return parenMatch[1] + '원';
 
   return undefined;
 }
