@@ -51,16 +51,14 @@ async function scrapePage(page: number): Promise<{ deals: Deal[]; hasMore: boole
   const html = decoder.decode(res.data);
   const $ = cheerio.load(html);
   const deals: Deal[] = [];
-  let stopPagination = false;
 
   $('.bbsList_new > li').each((i, el) => {
     const rawTime = $(el).find('time').first().text().trim();
 
-    // 뽐뿌는 당일 글만 "HH:mm:ss" 형식, 이전 날 글은 "YY/MM/DD" 형식
-    // 이전 날 항목이 나오면 이후 항목도 모두 이전 날이므로 순회 중단
+    // HOT 리스트는 인기순 정렬 → 이전날 항목이 중간에 섞일 수 있으므로
+    // 당일("HH:mm:ss") 형식이 아니면 해당 항목만 스킵, 루프는 계속
     if (!/^\d{2}:\d{2}:\d{2}$/.test(rawTime)) {
-      stopPagination = true;
-      return false;
+      return;
     }
 
     const titleEl = $(el).find('.title .cont').first();
@@ -105,8 +103,7 @@ async function scrapePage(page: number): Promise<{ deals: Deal[]; hasMore: boole
     });
   });
 
-  // 이전 날 항목을 만났으면 다음 페이지 불필요
-  const hasMore = !stopPagination && $('a[href*="page="]').length > 0;
+  const hasMore = $('a[href*="page="]').length > 0;
   return { deals, hasMore };
 }
 
