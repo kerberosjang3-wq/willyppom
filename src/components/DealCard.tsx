@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { format, isToday, isThisYear } from 'date-fns';
 import type { Deal } from '@/types/deal';
 import { SOURCE_META, CATEGORY_META } from '@/types/deal';
 import PriceGauge from '@/components/PriceGauge';
+import NaverPriceBar from '@/components/NaverPriceBar';
+import type { NaverPriceResult } from '@/app/api/naver-price/route';
 import { useReadDeal } from '@/hooks/useReadDeal';
 import { useBookmark } from '@/hooks/useBookmark';
 import type { Comment } from '@/app/api/comments/route';
@@ -30,6 +32,26 @@ export default function DealCard({ deal }: Props) {
   const { isBookmarked, toggle } = useBookmark(deal.id);
   const [mallLoading, setMallLoading] = useState(false);
   const [mallVisited, setMallVisited] = useState(false);
+
+  const [naverPrice, setNaverPrice]       = useState<NaverPriceResult | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!deal.price) return;
+    const el = cardRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      obs.disconnect();
+      const query = deal.productName || deal.title;
+      fetch(`/api/naver-price?q=${encodeURIComponent(query)}`)
+        .then(r => r.json())
+        .then((data: NaverPriceResult) => { if (data.count > 0) setNaverPrice(data); })
+        .catch(() => {});
+    }, { rootMargin: '200px' });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [deal.price, deal.productName, deal.title]);
 
   const [commentsOpen, setCommentsOpen]   = useState(false);
   const [commentsViewed, setCommentsViewed] = useState(false);
@@ -86,6 +108,7 @@ export default function DealCard({ deal }: Props) {
 
   return (
     <div
+      ref={cardRef}
       className={`bg-surface-card rounded-2xl overflow-hidden border border-surface-border/40 hover:bg-surface-hover transition-all duration-150 ${opacityClass}`}
       style={{
         boxShadow: `0 2px 10px rgba(0,0,0,0.35)`,
@@ -157,9 +180,19 @@ export default function DealCard({ deal }: Props) {
               </div>
             )}
 
-            {/* Price Gauge */}
+            {/* Price Gauge (앱 내 이력) */}
             {deal.priceStats && deal.priceStats.historyCount >= 1 && (
               <PriceGauge currentPriceStr={deal.price} stats={deal.priceStats} />
+            )}
+
+            {/* 네이버 쇼핑 가격 범위 */}
+            {naverPrice && deal.price && (
+              <NaverPriceBar
+                currentPriceStr={deal.price}
+                min={naverPrice.min}
+                max={naverPrice.max}
+                count={naverPrice.count}
+              />
             )}
 
           </div>
