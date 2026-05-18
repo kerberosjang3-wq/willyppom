@@ -73,7 +73,6 @@ export default function DealCard({ deal }: Props) {
   const [mallsLoading, setMallsLoading]   = useState(false);
 
   const handleCardClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
     const next = !mallsOpen;
     setMallsOpen(next);
     markRead();
@@ -321,16 +320,13 @@ export default function DealCard({ deal }: Props) {
           {/* 헤더 */}
           <div className="flex items-center justify-between mb-0.5">
             <span className="text-[10px] text-zinc-500 font-semibold">네이버 쇼핑 가격 비교</span>
-            <a
-              href={deal.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={markRead}
+            <button
+              onClick={(e) => { e.stopPropagation(); markRead(); window.open(deal.url, '_blank', 'noopener,noreferrer'); }}
               className="text-[10px] font-bold px-1.5 py-0.5 rounded-md transition-opacity hover:opacity-70"
               style={{ color: meta.color, backgroundColor: `${meta.color}20` }}
             >
               {meta.name}
-            </a>
+            </button>
           </div>
 
           {/* 로딩 */}
