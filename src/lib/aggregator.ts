@@ -23,7 +23,7 @@ export function aggregateDeals(deals: Deal[]): Deal[] {
   const aggregated: Record<string, Deal> = {};
   const mergedList: Deal[] = [];
 
-  const sortedDeals = [...deals].sort((a, b) => b.hotScore - a.hotScore);
+  const sortedDeals = [...deals].sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0));
 
   for (const deal of sortedDeals) {
     const matchKey = buildMatchKey(deal);
@@ -48,7 +48,6 @@ export function aggregateDeals(deals: Deal[]): Deal[] {
         // Combine stats
         baseDeal.commentCount += deal.commentCount;
         baseDeal.likeCount += deal.likeCount;
-        baseDeal.hotScore += deal.hotScore; // Combine hot scores
       }
     } else {
       // New distinct deal
@@ -57,6 +56,5 @@ export function aggregateDeals(deals: Deal[]): Deal[] {
     }
   }
 
-  // Final re-sort by the newly combined hotScore
-  return mergedList.sort((a, b) => b.hotScore - a.hotScore);
+  return mergedList.sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0));
 }

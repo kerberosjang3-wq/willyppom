@@ -20,7 +20,7 @@ export async function fetchAllDeals(): Promise<DealsResponse> {
     console.error('[scrapers] quasarzone failed:', quasarzoneResult.reason);
 
   const deals = [...ppomppuDeals, ...quasarzoneDeals];
-  deals.sort((a, b) => b.hotScore - a.hotScore);
+  deals.sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0));
 
   return {
     deals,

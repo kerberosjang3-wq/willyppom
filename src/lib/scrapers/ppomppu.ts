@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import type { Deal } from '@/types/deal';
-import { detectCategory, calcHotScore, makeId, safeNumber } from './utils';
+import { detectCategory, makeId, safeNumber } from './utils';
 
 const BASE_URL  = 'https://m.ppomppu.co.kr';
 const TIMEOUT   = 10_000;
@@ -100,7 +100,6 @@ async function scrapePage(page: number): Promise<{ deals: Deal[]; hasMore: boole
       commentCount,
       likeCount,
       viewCount,
-      hotScore:   calcHotScore(commentCount, likeCount, 2),
       publishedAt,
       isSoldOut:  isSoldOut || undefined,
     });

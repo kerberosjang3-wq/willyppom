@@ -30,7 +30,6 @@ export interface Deal {
   commentCount: number;
   likeCount: number;
   viewCount?: number;
-  hotScore: number;
   publishedAt: string; // ISO string
   description?: string;
   duplicateSources?: { source: SourceId; sourceName: string; url: string }[]; // Links from merged duplicates

@@ -26,12 +26,6 @@ export function extractPrice(text: string): string | undefined {
   return m ? m[0].trim() : undefined;
 }
 
-export function calcHotScore(commentCount: number, likeCount: number, ageHours: number): number {
-  const activity = commentCount * 1.5 + likeCount;
-  const decay = Math.pow(0.85, ageHours);
-  return Math.round(activity * decay * 100) / 100;
-}
-
 export function makeId(source: string, rawId: string): string {
   return `${source}-${rawId.replace(/\W+/g, '-')}`;
 }

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import type { Deal, CategoryId } from '@/types/deal';
-import { calcHotScore, makeId, safeNumber } from './utils';
+import { makeId, safeNumber } from './utils';
 
 const BOARD_URL = 'https://quasarzone.com/bbs/qb_saleinfo';
 const BASE_URL  = 'https://quasarzone.com';
@@ -152,7 +152,6 @@ export async function scrapeQuasarzone(): Promise<Deal[]> {
         commentCount,
         likeCount,
         viewCount,
-        hotScore:    calcHotScore(commentCount, likeCount, ageHours),
         publishedAt,
         isSoldOut:   isSoldOut || undefined,
       });

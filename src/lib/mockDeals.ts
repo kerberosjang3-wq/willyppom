@@ -10,7 +10,7 @@ export const MOCK_DEALS: Deal[] = [
     originalPrice: '149,000원',
     discountRate: '-40%',
     source: 'ppomppu', sourceName: '뽐뿌', category: 'electronics',
-    commentCount: 234, likeCount: 891, hotScore: 95.2,
+    commentCount: 234, likeCount: 891,
     publishedAt: new Date(Date.now() - 30 * 60e3).toISOString(),
     description: '삼성 공홈 기준 149,000원인데 역대 최저가 경신',
   },
@@ -23,7 +23,7 @@ export const MOCK_DEALS: Deal[] = [
     originalPrice: '329,000원',
     discountRate: '-39%',
     source: 'ppomppu', sourceName: '뽐뿌', category: 'electronics',
-    commentCount: 178, likeCount: 654, hotScore: 88.5,
+    commentCount: 178, likeCount: 654,
     publishedAt: new Date(Date.now() - 1.5 * 36e5).toISOString(),
   },
   {
@@ -35,7 +35,7 @@ export const MOCK_DEALS: Deal[] = [
     originalPrice: '699,000원',
     discountRate: '-21%',
     source: 'ppomppu', sourceName: '뽐뿌', category: 'game',
-    commentCount: 312, likeCount: 1024, hotScore: 92.1,
+    commentCount: 312, likeCount: 1024,
     publishedAt: new Date(Date.now() - 45 * 60e3).toISOString(),
   },
   {
@@ -47,7 +47,7 @@ export const MOCK_DEALS: Deal[] = [
     originalPrice: '25,000원',
     discountRate: '-50%',
     source: 'ppomppu', sourceName: '뽐뿌', category: 'food',
-    commentCount: 456, likeCount: 1200, hotScore: 98.7,
+    commentCount: 456, likeCount: 1200,
     publishedAt: new Date(Date.now() - 20 * 60e3).toISOString(),
   },
   {
@@ -59,7 +59,7 @@ export const MOCK_DEALS: Deal[] = [
     originalPrice: '149,000원',
     discountRate: '-47%',
     source: 'ppomppu', sourceName: '뽐뿌', category: 'fashion',
-    commentCount: 89, likeCount: 320, hotScore: 72.4,
+    commentCount: 89, likeCount: 320,
     publishedAt: new Date(Date.now() - 2.5 * 36e5).toISOString(),
   },
   {
@@ -71,7 +71,7 @@ export const MOCK_DEALS: Deal[] = [
     originalPrice: '499,000원',
     discountRate: '-42%',
     source: 'ppomppu', sourceName: '뽐뿌', category: 'living',
-    commentCount: 145, likeCount: 567, hotScore: 81.3,
+    commentCount: 145, likeCount: 567,
     publishedAt: new Date(Date.now() - 3 * 36e5).toISOString(),
   },
   {
@@ -81,7 +81,7 @@ export const MOCK_DEALS: Deal[] = [
     url: 'https://www.ppomppu.co.kr',
     price: '399,000원',
     source: 'ppomppu', sourceName: '뽐뿌', category: 'game',
-    commentCount: 201, likeCount: 789, hotScore: 86.9,
+    commentCount: 201, likeCount: 789,
     publishedAt: new Date(Date.now() - 4 * 36e5).toISOString(),
   },
   {
@@ -93,7 +93,7 @@ export const MOCK_DEALS: Deal[] = [
     originalPrice: '28,500원',
     discountRate: '-34%',
     source: 'ppomppu', sourceName: '뽐뿌', category: 'food',
-    commentCount: 167, likeCount: 445, hotScore: 77.2,
+    commentCount: 167, likeCount: 445,
     publishedAt: new Date(Date.now() - 5 * 36e5).toISOString(),
   },
 ];
