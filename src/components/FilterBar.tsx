@@ -1,7 +1,7 @@
 'use client';
 
-import type { CategoryId } from '@/types/deal';
-import { CATEGORY_META } from '@/types/deal';
+import type { CategoryId, SourceId } from '@/types/deal';
+import { CATEGORY_META, SOURCE_META } from '@/types/deal';
 
 type SortId = 'view' | 'date' | 'comment';
 
@@ -11,16 +11,30 @@ const SORT_OPTIONS: { id: SortId; label: string }[] = [
   { id: 'comment', label: '댓글순' },
 ];
 
+const SOURCE_OPTIONS: SourceId[] = ['ppomppu', 'quasarzone'];
+
 interface Props {
   activeCategory: CategoryId;
   activeSort:     SortId;
+  activeSources:  SourceId[];
   onCategory: (c: CategoryId) => void;
   onSort:     (s: SortId)     => void;
+  onSources:  (s: SourceId[]) => void;
 }
 
 const CATEGORIES = Object.entries(CATEGORY_META) as [CategoryId, { name: string; emoji: string }][];
 
-export default function FilterBar({ activeCategory, activeSort, onCategory, onSort }: Props) {
+export default function FilterBar({ activeCategory, activeSort, activeSources, onCategory, onSort, onSources }: Props) {
+  function toggleSource(id: SourceId) {
+    if (activeSources.includes(id)) {
+      // 하나만 남으면 해제 못하게
+      if (activeSources.length === 1) return;
+      onSources(activeSources.filter(s => s !== id));
+    } else {
+      onSources([...activeSources, id]);
+    }
+  }
+
   return (
     <div className="bg-surface border-b border-surface-border">
       {/* Category scroll */}
@@ -41,8 +55,9 @@ export default function FilterBar({ activeCategory, activeSort, onCategory, onSo
         ))}
       </div>
 
-      {/* Sort row */}
-      <div className="flex items-center px-2.5 pb-1">
+      {/* Sort + Source row */}
+      <div className="flex items-center gap-2 px-2.5 pb-1">
+        {/* Sort */}
         <div className="flex items-center bg-surface-card rounded-full p-0.5 gap-0">
           {SORT_OPTIONS.map(({ id, label }) => (
             <button
@@ -57,6 +72,32 @@ export default function FilterBar({ activeCategory, activeSort, onCategory, onSo
               {label}
             </button>
           ))}
+        </div>
+
+        {/* Source filter */}
+        <div className="flex items-center gap-1 ml-auto">
+          {SOURCE_OPTIONS.map(id => {
+            const meta    = SOURCE_META[id];
+            const active  = activeSources.includes(id);
+            return (
+              <button
+                key={id}
+                onClick={() => toggleSource(id)}
+                className="px-2 py-0.5 rounded-full text-[10px] font-bold transition-all duration-150 border"
+                style={active ? {
+                  color:           meta.color,
+                  borderColor:     meta.color,
+                  backgroundColor: `${meta.color}20`,
+                } : {
+                  color:           '#52525b',
+                  borderColor:     '#3f3f46',
+                  backgroundColor: 'transparent',
+                }}
+              >
+                {meta.name}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

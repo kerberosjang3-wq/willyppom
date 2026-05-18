@@ -86,10 +86,9 @@ export default function DealCard({ deal }: Props) {
 
   return (
     <div
-      className={`bg-surface-card rounded-2xl overflow-hidden border border-surface-border/40 hover:bg-surface-hover transition-all duration-150 border-l-[3px] ${opacityClass}`}
+      className={`bg-surface-card rounded-2xl overflow-hidden border border-surface-border/40 hover:bg-surface-hover transition-all duration-150 ${opacityClass}`}
       style={{
-        borderLeftColor: meta.color,
-        boxShadow: `0 2px 10px rgba(0,0,0,0.35), 0 0 0 0 transparent`,
+        boxShadow: `0 2px 10px rgba(0,0,0,0.35)`,
       }}
     >
 
@@ -99,7 +98,7 @@ export default function DealCard({ deal }: Props) {
         target="_blank"
         rel="noopener noreferrer"
         onClick={markRead}
-        className="block active:scale-[0.98] transition-transform duration-100 px-3 pt-3 pb-1.5"
+        className="block active:scale-[0.98] transition-transform duration-100 px-3 pt-2 pb-1"
       >
         <div className="flex gap-2.5">
 
@@ -168,7 +167,7 @@ export default function DealCard({ deal }: Props) {
       </a>
 
       {/* 3행: 쇼핑몰 뱃지 + 상태 뱃지 + 북마크 / 댓글·좋아요·시간 */}
-      <div className="flex items-center gap-2 px-3 pb-3">
+      <div className="flex items-center gap-2 px-3 pb-2">
         <button
           onClick={handleMallClick}
           disabled={mallLoading}

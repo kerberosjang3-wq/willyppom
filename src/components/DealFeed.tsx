@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Deal, CategoryId } from '@/types/deal';
+import type { Deal, CategoryId, SourceId } from '@/types/deal';
 import DealCard from './DealCard';
 import LoadingCard from './LoadingCard';
 import Header from './Header';
@@ -47,6 +47,7 @@ export default function DealFeed({ initialDeals = [] }: Props) {
 
   const [category, setCategory]     = useState<CategoryId>('all');
   const [sort, setSort]             = useState<'view' | 'date' | 'comment'>('date');
+  const [activeSources, setActiveSources] = useState<SourceId[]>(['ppomppu', 'quasarzone']);
   const [searchQuery, setSearchQuery] = useState('');
   const [showKeywords, setShowKeywords] = useState(false);
   const prevDealIdsRef = useRef<Set<string>>(new Set(initialDeals.map(d => d.id)));
@@ -199,8 +200,10 @@ export default function DealFeed({ initialDeals = [] }: Props) {
         <FilterBar
           activeCategory={category}
           activeSort={sort}
+          activeSources={activeSources}
           onCategory={c => { setCategory(c); }}
           onSort={(s: 'view' | 'date' | 'comment') => setSort(s)}
+          onSources={setActiveSources}
         />
       </div>
 
@@ -233,7 +236,7 @@ export default function DealFeed({ initialDeals = [] }: Props) {
         )}
 
         {/* Deal list */}
-        {!loading && deals.length === 0 && !error && (
+        {!loading && deals.filter(d => activeSources.includes(d.source)).length === 0 && !error && (
           <div className="mt-20 text-center">
             <p className="text-4xl mb-3">🔍</p>
             <p className="text-zinc-400 text-sm">검색 결과가 없어요</p>
@@ -241,8 +244,10 @@ export default function DealFeed({ initialDeals = [] }: Props) {
         )}
 
         {!loading && (
-          <div className="mt-4 space-y-3 animate-fade-in">
-            {deals.map(deal => <DealCard key={deal.id} deal={deal} />)}
+          <div className="mt-4 space-y-1.5 animate-fade-in">
+            {deals
+              .filter(d => activeSources.includes(d.source))
+              .map(deal => <DealCard key={deal.id} deal={deal} />)}
           </div>
         )}
 
