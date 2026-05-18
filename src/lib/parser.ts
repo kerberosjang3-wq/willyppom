@@ -44,19 +44,27 @@ export function extractShipping(title: string): string | undefined {
   return undefined;
 }
 
+// 한국 가격 포맷 유효성 검사: 1~3자리 시작 후 ,xxx 그룹 반복 (예: 16,900 / 1,234,567)
+function isValidKoreanPrice(s: string): boolean {
+  return /^\d{1,3}(,\d{3})*$/.test(s);
+}
+
 export function extractPrice(title: string): string | undefined {
   // 명시적 "원" 패턴: 16,900원
   const wonMatch = title.match(/[\d,]+\s*원/);
-  if (wonMatch) return wonMatch[0].trim();
+  if (wonMatch) {
+    const num = wonMatch[0].replace(/\s*원$/, '');
+    if (isValidKoreanPrice(num)) return wonMatch[0].trim();
+  }
 
   // 달러 패턴
   const dollarMatch = title.match(/\$\s*[\d,.]+/);
   if (dollarMatch) return dollarMatch[0].trim();
 
-  // 괄호 안 가격 패턴: (16,900/무배) 또는 제목이 잘린 (16,900...
-  // [\d,]{4,} → 최소 4자리 이상(1,000 이상)만 가격으로 간주
+  // 괄호 안 가격 패턴: (16,900/무배) 또는 잘린 제목 (16,900...
+  // 단, 쉼표 뒤 자리수가 맞지 않는 잘린 숫자(62,6 등)는 제외
   const parenMatch = title.match(/\(([\d,]{4,})(?:\/|\.\.\.|\))/);
-  if (parenMatch) return parenMatch[1] + '원';
+  if (parenMatch && isValidKoreanPrice(parenMatch[1])) return parenMatch[1] + '원';
 
   return undefined;
 }

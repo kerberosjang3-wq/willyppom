@@ -20,7 +20,6 @@ export default function DealCard({ deal }: Props) {
   const catMeta  = CATEGORY_META[deal.category];
   const pubDate  = new Date(deal.publishedAt);
   const soldOut  = deal.isSoldOut ?? false;
-  const hasPrice = !!deal.price;
 
   const postTime = isToday(pubDate)
     ? format(pubDate, 'HH:mm')
@@ -28,30 +27,66 @@ export default function DealCard({ deal }: Props) {
       ? format(pubDate, 'MM/dd HH:mm')
       : format(pubDate, 'yy/MM/dd');
 
+  const [fetchedPrice, setFetchedPrice]   = useState<string | undefined>();
+  const [naverPrice, setNaverPrice]       = useState<NaverPriceResult | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const displayPrice = deal.price ?? fetchedPrice;
+  const hasPrice     = !!displayPrice;
+
   const { isRead, markRead }     = useReadDeal(deal.id);
   const { isBookmarked, toggle } = useBookmark(deal.id);
   const [mallLoading, setMallLoading] = useState(false);
   const [mallVisited, setMallVisited] = useState(false);
 
-  const [naverPrice, setNaverPrice]       = useState<NaverPriceResult | null>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    if (!deal.price) return;
     const el = cardRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(([entry]) => {
       if (!entry.isIntersecting) return;
       obs.disconnect();
-      const query = deal.productName || deal.title;
-      fetch(`/api/naver-price?q=${encodeURIComponent(query)}`)
-        .then(r => r.json())
-        .then((data: NaverPriceResult) => { if (data.count > 0) setNaverPrice(data); })
-        .catch(() => {});
+
+      // 가격이 없으면 상세 페이지에서 먼저 가져옴
+      const pricePromise: Promise<string | null> = deal.price
+        ? Promise.resolve(deal.price)
+        : fetch(`/api/deal-price?url=${encodeURIComponent(deal.url)}`)
+            .then(r => r.json())
+            .then(d => { if (d.price) setFetchedPrice(d.price); return d.price ?? null; })
+            .catch(() => null);
+
+      // 가격 확보 후 네이버 비교 실행
+      pricePromise.then(price => {
+        if (!price) return;
+        const query      = deal.productName || deal.title;
+        const priceParam = `&price=${encodeURIComponent(price)}`;
+        fetch(`/api/naver-price?q=${encodeURIComponent(query)}${priceParam}`)
+          .then(r => r.json())
+          .then((data: NaverPriceResult) => { if (data.count > 0) setNaverPrice(data); })
+          .catch(() => {});
+      });
     }, { rootMargin: '200px' });
     obs.observe(el);
     return () => obs.disconnect();
-  }, [deal.price, deal.productName, deal.title]);
+  }, [deal.url, deal.price, deal.productName, deal.title]);
+
+  const [mallsOpen, setMallsOpen]         = useState(false);
+  const [mallsLoading, setMallsLoading]   = useState(false);
+
+  const handleCardClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const next = !mallsOpen;
+    setMallsOpen(next);
+    markRead();
+    if (next && !naverPrice && displayPrice) {
+      setMallsLoading(true);
+      const query = deal.productName || deal.title;
+      fetch(`/api/naver-price?q=${encodeURIComponent(query)}&price=${encodeURIComponent(displayPrice)}`)
+        .then(r => r.json())
+        .then((data: NaverPriceResult) => { if (data.count > 0) setNaverPrice(data); })
+        .catch(() => {})
+        .finally(() => setMallsLoading(false));
+    }
+  }, [mallsOpen, naverPrice, displayPrice, deal.productName, deal.title, markRead]);
 
   const [commentsOpen, setCommentsOpen]   = useState(false);
   const [commentsViewed, setCommentsViewed] = useState(false);
@@ -115,13 +150,10 @@ export default function DealCard({ deal }: Props) {
       }}
     >
 
-      {/* 1·2행: 뽐뿌 게시글 링크 */}
-      <a
-        href={deal.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={markRead}
-        className="block active:scale-[0.98] transition-transform duration-100 px-3 pt-2 pb-1"
+      {/* 1·2행: 카드 클릭 → 쇼핑몰 아코디언 토글 */}
+      <div
+        onClick={handleCardClick}
+        className={`block active:scale-[0.98] transition-transform duration-100 px-3 pt-2 pb-1 cursor-pointer select-none ${mallsOpen ? 'bg-zinc-800/30' : ''}`}
       >
         <div className="flex gap-2.5">
 
@@ -150,7 +182,7 @@ export default function DealCard({ deal }: Props) {
             {/* 2행: 가격 정보 (가격 있을 때만) */}
             {hasPrice && (
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-brand-400 font-bold text-sm leading-none">{deal.price}</span>
+                <span className="text-brand-400 font-bold text-sm leading-none">{displayPrice}</span>
                 {deal.shipping && (
                   <span className="text-zinc-400 text-[10px] bg-zinc-800 px-1 rounded leading-none py-0.5">
                     {deal.shipping}
@@ -182,13 +214,13 @@ export default function DealCard({ deal }: Props) {
 
             {/* Price Gauge (앱 내 이력) */}
             {deal.priceStats && deal.priceStats.historyCount >= 1 && (
-              <PriceGauge currentPriceStr={deal.price} stats={deal.priceStats} />
+              <PriceGauge currentPriceStr={displayPrice} stats={deal.priceStats} />
             )}
 
             {/* 네이버 쇼핑 가격 범위 */}
-            {naverPrice && deal.price && (
+            {naverPrice && displayPrice && (
               <NaverPriceBar
-                currentPriceStr={deal.price}
+                currentPriceStr={displayPrice}
                 min={naverPrice.min}
                 max={naverPrice.max}
                 count={naverPrice.count}
@@ -197,7 +229,7 @@ export default function DealCard({ deal }: Props) {
 
           </div>
         </div>
-      </a>
+      </div>
 
       {/* 3행: 쇼핑몰 뱃지 + 상태 뱃지 + 북마크 / 댓글·좋아요·시간 */}
       <div className="flex items-center gap-2 px-3 pb-2">
@@ -281,6 +313,81 @@ export default function DealCard({ deal }: Props) {
           <span className="text-[10px] text-zinc-500">{postTime}</span>
         </div>
       </div>
+
+      {/* 쇼핑몰 가격 비교 아코디언 */}
+      {mallsOpen && (
+        <div className="border-t border-surface-border/40 px-3 py-2 flex flex-col gap-1.5">
+
+          {/* 헤더 */}
+          <div className="flex items-center justify-between mb-0.5">
+            <span className="text-[10px] text-zinc-500 font-semibold">네이버 쇼핑 가격 비교</span>
+            <a
+              href={deal.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={markRead}
+              className="text-[10px] font-bold px-1.5 py-0.5 rounded-md transition-opacity hover:opacity-70"
+              style={{ color: meta.color, backgroundColor: `${meta.color}20` }}
+            >
+              {meta.name}
+            </a>
+          </div>
+
+          {/* 로딩 */}
+          {mallsLoading && (
+            <div className="flex items-center justify-center py-3">
+              <svg className="w-4 h-4 animate-spin text-zinc-500" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+            </div>
+          )}
+
+          {/* 가격 없음 안내 */}
+          {!mallsLoading && !naverPrice && (
+            <p className="text-[10px] text-zinc-600 text-center py-2">비교 데이터가 없어요</p>
+          )}
+
+          {/* 쇼핑몰 목록 */}
+          {!mallsLoading && naverPrice && naverPrice.items.map((item, i) => (
+            <a
+              key={item.link + i}
+              href={item.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-zinc-800/60 transition-colors group"
+            >
+              {/* 순위 */}
+              <span className={`shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${
+                i === 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-700/50 text-zinc-500'
+              }`}>
+                {i + 1}
+              </span>
+
+              {/* 쇼핑몰명 + 상품명 */}
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-[10px] font-semibold text-zinc-300 truncate">{item.mallName}</span>
+                <span className="text-[9px] text-zinc-600 truncate">{item.title}</span>
+              </div>
+
+              {/* 가격 */}
+              <div className="flex flex-col items-end shrink-0">
+                <span className={`text-[11px] font-bold ${i === 0 ? 'text-emerald-400' : 'text-zinc-300'}`}>
+                  {item.price.toLocaleString('ko-KR')}원
+                </span>
+                {displayPrice && i === 0 && (() => {
+                  const cur = parseInt(displayPrice.replace(/[^\d]/g, ''));
+                  const diff = cur - item.price;
+                  if (diff > 0) return <span className="text-[9px] text-rose-400">+{diff.toLocaleString()}원</span>;
+                  if (diff < 0) return <span className="text-[9px] text-emerald-400">{diff.toLocaleString()}원</span>;
+                  return null;
+                })()}
+              </div>
+            </a>
+          ))}
+
+        </div>
+      )}
 
       {/* 댓글 확장 영역 */}
       {commentsOpen && (
