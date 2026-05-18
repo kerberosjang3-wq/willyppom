@@ -16,7 +16,6 @@ export default function DealCard({ deal }: Props) {
   const meta     = SOURCE_META[deal.source];
   const catMeta  = CATEGORY_META[deal.category];
   const pubDate  = new Date(deal.publishedAt);
-  const isHot    = deal.hotScore > 60;
   const soldOut  = deal.isSoldOut ?? false;
   const hasPrice = !!deal.price;
 
@@ -162,11 +161,6 @@ export default function DealCard({ deal }: Props) {
         {soldOut && (
           <span className="bg-zinc-700 text-zinc-300 text-[9px] font-bold px-1.5 py-0.5 rounded-md">
             마감
-          </span>
-        )}
-        {!soldOut && isHot && (
-          <span className="bg-brand-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
-            HOT
           </span>
         )}
 
