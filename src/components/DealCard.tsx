@@ -13,9 +13,10 @@ import type { Comment } from '@/app/api/comments/route';
 
 interface Props {
   deal: Deal;
+  showNaverGauge?: boolean;
 }
 
-export default function DealCard({ deal }: Props) {
+export default function DealCard({ deal, showNaverGauge = false }: Props) {
   const meta     = SOURCE_META[deal.source];
   const catMeta  = CATEGORY_META[deal.category];
   const pubDate  = new Date(deal.publishedAt);
@@ -54,25 +55,32 @@ export default function DealCard({ deal }: Props) {
             .then(d => { if (d.price) setFetchedPrice(d.price); return d.price ?? null; })
             .catch(() => null);
 
-      // 가격 확보 후 네이버 비교 실행
-      pricePromise.then(price => {
-        if (!price) return;
-        const query      = deal.productName || deal.title;
-        const priceParam = `&price=${encodeURIComponent(price)}`;
-        fetch(`/api/naver-price?q=${encodeURIComponent(query)}${priceParam}`)
-          .then(r => r.json())
-          .then((data: NaverPriceResult) => { if (data.count > 0) setNaverPrice(data); })
-          .catch(() => {});
-      });
+      // 찜목록에서만 네이버 가격 비교 자동 호출
+      if (showNaverGauge) {
+        pricePromise.then(price => {
+          if (!price) return;
+          const query      = deal.productName || deal.title;
+          const priceParam = `&price=${encodeURIComponent(price)}`;
+          fetch(`/api/naver-price?q=${encodeURIComponent(query)}${priceParam}`)
+            .then(r => r.json())
+            .then((data: NaverPriceResult) => { if (data.count > 0) setNaverPrice(data); })
+            .catch(() => {});
+        });
+      }
     }, { rootMargin: '200px' });
     obs.observe(el);
     return () => obs.disconnect();
-  }, [deal.url, deal.price, deal.productName, deal.title]);
+  }, [deal.url, deal.price, deal.productName, deal.title, showNaverGauge]);
 
   const [mallsOpen, setMallsOpen]         = useState(false);
   const [mallsLoading, setMallsLoading]   = useState(false);
 
-  const handleCardClick = useCallback((e: React.MouseEvent) => {
+  const handleCardClick = useCallback(() => {
+    if (!showNaverGauge) {
+      markRead();
+      window.open(deal.url, '_blank', 'noopener,noreferrer');
+      return;
+    }
     const next = !mallsOpen;
     setMallsOpen(next);
     markRead();
@@ -85,7 +93,7 @@ export default function DealCard({ deal }: Props) {
         .catch(() => {})
         .finally(() => setMallsLoading(false));
     }
-  }, [mallsOpen, naverPrice, displayPrice, deal.productName, deal.title, markRead]);
+  }, [showNaverGauge, mallsOpen, naverPrice, displayPrice, deal.url, deal.productName, deal.title, markRead]);
 
   const [commentsOpen, setCommentsOpen]   = useState(false);
   const [commentsViewed, setCommentsViewed] = useState(false);
@@ -149,10 +157,10 @@ export default function DealCard({ deal }: Props) {
       }}
     >
 
-      {/* 1·2행: 카드 클릭 → 쇼핑몰 아코디언 토글 */}
+      {/* 1·2행: 찜목록에서만 카드 클릭 → 쇼핑몰 아코디언 토글 */}
       <div
         onClick={handleCardClick}
-        className={`block active:scale-[0.98] transition-transform duration-100 px-3 pt-2 pb-1 cursor-pointer select-none ${mallsOpen ? 'bg-zinc-800/30' : ''}`}
+        className={`block active:scale-[0.98] transition-transform duration-100 px-3 pt-2 pb-1 cursor-pointer select-none${showNaverGauge && mallsOpen ? ' bg-zinc-800/30' : ''}`}
       >
         <div className="flex gap-2.5">
 
@@ -216,8 +224,8 @@ export default function DealCard({ deal }: Props) {
               <PriceGauge currentPriceStr={displayPrice} stats={deal.priceStats} />
             )}
 
-            {/* 네이버 쇼핑 가격 범위 */}
-            {naverPrice && displayPrice && (
+            {/* 네이버 쇼핑 가격 범위 — 찜목록 전용 */}
+            {showNaverGauge && naverPrice && displayPrice && (
               <NaverPriceBar
                 currentPriceStr={displayPrice}
                 min={naverPrice.min}
@@ -313,8 +321,8 @@ export default function DealCard({ deal }: Props) {
         </div>
       </div>
 
-      {/* 쇼핑몰 가격 비교 아코디언 */}
-      {mallsOpen && (
+      {/* 쇼핑몰 가격 비교 아코디언 — 찜목록 전용 */}
+      {showNaverGauge && mallsOpen && (
         <div className="border-t border-surface-border/40 px-3 py-2 flex flex-col gap-1.5">
 
           {/* 헤더 */}

@@ -33,7 +33,7 @@ export default function BookmarkFeed() {
       <p className="text-[11px] text-zinc-600 mb-3">찜한 딜 {deals.length}개</p>
       {deals.map(deal => (
         <div key={deal.id} onClick={refresh}>
-          <DealCard deal={deal} />
+          <DealCard deal={deal} showNaverGauge />
         </div>
       ))}
     </div>
