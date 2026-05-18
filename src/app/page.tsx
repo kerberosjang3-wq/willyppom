@@ -9,7 +9,7 @@ export default function HomePage() {
   // If cache is cold (first ever request), returns [] and client will fetch normally.
   const cached = getCacheWithMeta<DealsResponse>(DEALS_CACHE_KEY);
   const initialDeals: Deal[] = cached
-    ? [...cached.data.deals].sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0)).slice(0, 20)
+    ? [...cached.data.deals].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()).slice(0, 20)
     : [];
 
   return <HomeClient initialDeals={initialDeals} />;

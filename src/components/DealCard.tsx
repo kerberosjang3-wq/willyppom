@@ -7,6 +7,7 @@ import { SOURCE_META, CATEGORY_META } from '@/types/deal';
 import PriceGauge from '@/components/PriceGauge';
 import { useReadDeal } from '@/hooks/useReadDeal';
 import { useBookmark } from '@/hooks/useBookmark';
+import type { Comment } from '@/app/api/comments/route';
 
 interface Props {
   deal: Deal;
@@ -25,15 +26,19 @@ export default function DealCard({ deal }: Props) {
       ? format(pubDate, 'MM/dd HH:mm')
       : format(pubDate, 'yy/MM/dd');
 
-  const { isRead, markRead }       = useReadDeal(deal.id);
-  const { isBookmarked, toggle }   = useBookmark(deal.id);
+  const { isRead, markRead }     = useReadDeal(deal.id);
+  const { isBookmarked, toggle } = useBookmark(deal.id);
   const [mallLoading, setMallLoading] = useState(false);
+
+  const [commentsOpen, setCommentsOpen]   = useState(false);
+  const [comments, setComments]           = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsError, setCommentsError] = useState(false);
 
   const handleMallClick = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (mallLoading) return;
-
     markRead();
     setMallLoading(true);
     try {
@@ -46,6 +51,32 @@ export default function DealCard({ deal }: Props) {
       setMallLoading(false);
     }
   }, [deal.url, mallLoading, markRead]);
+
+  const handleCommentToggle = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (commentsOpen) {
+      setCommentsOpen(false);
+      return;
+    }
+
+    setCommentsOpen(true);
+
+    if (comments.length > 0) return; // already loaded
+
+    setCommentsLoading(true);
+    setCommentsError(false);
+    try {
+      const res  = await fetch(`/api/comments?url=${encodeURIComponent(deal.url)}`);
+      const data = await res.json();
+      setComments(data.comments ?? []);
+    } catch {
+      setCommentsError(true);
+    } finally {
+      setCommentsLoading(false);
+    }
+  }, [commentsOpen, comments.length, deal.url]);
 
   const opacityClass = soldOut ? 'opacity-50' : isRead ? 'opacity-55' : '';
 
@@ -131,7 +162,7 @@ export default function DealCard({ deal }: Props) {
         <button
           onClick={handleMallClick}
           disabled={mallLoading}
-          className="flex items-center gap-1 text-[10px] text-brand-300 border border-brand-500/30 bg-brand-900/20 px-1.5 py-0.5 rounded-md font-semibold hover:bg-brand-900/40 transition-colors disabled:opacity-60"
+          className="flex items-center gap-1 text-[9px] text-brand-300 border border-brand-500/30 bg-brand-900/20 px-1.5 py-0.5 rounded-md font-semibold hover:bg-brand-900/40 transition-colors disabled:opacity-60 whitespace-nowrap shrink-0"
         >
           {mallLoading ? (
             <svg className="w-2.5 h-2.5 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -177,14 +208,18 @@ export default function DealCard({ deal }: Props) {
         </button>
 
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+          {/* 댓글 수 — 클릭 시 인라인 확장 */}
+          <button
+            onClick={handleCommentToggle}
+            className={`text-[10px] flex items-center gap-1 transition-colors ${commentsOpen ? 'text-brand-400' : 'text-zinc-500 hover:text-zinc-300'}`}
+          >
             <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
               />
             </svg>
             {deal.commentCount}
-          </span>
+          </button>
           <span className="text-[10px] text-zinc-500 flex items-center gap-1">
             <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
@@ -196,6 +231,57 @@ export default function DealCard({ deal }: Props) {
           <span className="text-[10px] text-zinc-500">{postTime}</span>
         </div>
       </div>
+
+      {/* 댓글 확장 영역 */}
+      {commentsOpen && (
+        <div className="border-t border-surface-border/40 px-3 py-2 flex flex-col gap-2">
+
+          {commentsLoading && (
+            <div className="flex items-center justify-center py-4">
+              <svg className="w-4 h-4 animate-spin text-zinc-500" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+            </div>
+          )}
+
+          {commentsError && (
+            <p className="text-[11px] text-zinc-500 text-center py-2">댓글을 불러오지 못했어요</p>
+          )}
+
+          {!commentsLoading && !commentsError && comments.length === 0 && (
+            <p className="text-[11px] text-zinc-500 text-center py-2">댓글이 없어요</p>
+          )}
+
+          {!commentsLoading && comments.map((c, i) => (
+            <div
+              key={c.id + i}
+              className={`flex flex-col gap-0.5 ${c.isReply ? 'pl-3 border-l border-zinc-700' : ''}`}
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-semibold text-zinc-300">{c.nickname}</span>
+                <span className="text-[9px] text-zinc-600">{c.time.slice(11)}</span>
+                {c.upvote > 0 && (
+                  <span className="text-[9px] text-emerald-500 ml-auto">👍 {c.upvote}</span>
+                )}
+              </div>
+              <p className="text-[11px] text-zinc-400 leading-snug">{c.body}</p>
+            </div>
+          ))}
+
+          {!commentsLoading && comments.length > 0 && (
+            <a
+              href={deal.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={markRead}
+              className="text-[10px] text-zinc-600 hover:text-zinc-400 text-center pt-1 transition-colors"
+            >
+              뽐뿌에서 전체 댓글 보기 →
+            </a>
+          )}
+        </div>
+      )}
 
     </div>
   );

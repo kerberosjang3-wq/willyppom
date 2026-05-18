@@ -6,8 +6,8 @@ import { CATEGORY_META } from '@/types/deal';
 type SortId = 'view' | 'date' | 'comment';
 
 const SORT_OPTIONS: { id: SortId; label: string }[] = [
-  { id: 'view',    label: '조회순' },
   { id: 'date',    label: '등록순' },
+  { id: 'view',    label: '조회순' },
   { id: 'comment', label: '댓글순' },
 ];
 
