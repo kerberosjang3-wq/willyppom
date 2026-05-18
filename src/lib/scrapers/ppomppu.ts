@@ -8,7 +8,7 @@ const TIMEOUT   = 10_000;
 const MAX_PAGES = 10;
 
 function boardUrl(page: number) {
-  return `${BASE_URL}/new/bbs_list.php?id=ppomppu&hotlist_flag=999&page=${page}`;
+  return `${BASE_URL}/new/pop_bbs.php?id=ppomppu&bot_type=pop_bbs&page=${page}`;
 }
 
 const SOLD_OUT_KEYWORDS = /[\[(（]?(마감|품절|종료|판매종료|sold\s*out)[\])）]?/i;
