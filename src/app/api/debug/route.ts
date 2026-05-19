@@ -3,6 +3,8 @@ import { scrapePpomppu } from '@/lib/scrapers/ppomppu';
 import { scrapeFmkorea } from '@/lib/scrapers/fmkorea';
 import axios from 'axios';
 
+export const preferredRegion = 'hnd1';
+
 export async function GET() {
   const results: Record<string, unknown> = {};
 
@@ -22,15 +24,25 @@ export async function GET() {
     results.fmkorea = { count: 0, ok: false, error: err instanceof Error ? err.message : String(err) };
   }
 
-  // --- fmkorea raw HTML 진단 (셀렉터 검증용) ---
+  // --- fmkorea raw HTML 진단 ---
   try {
-    const res = await axios.get<string>('https://www.fmkorea.com/index.php?mid=hotdeal&page=1', {
+    const scraperKey = process.env.SCRAPER_API_KEY;
+    const targetUrl  = 'https://www.fmkorea.com/index.php?mid=hotdeal&page=1';
+    const fetchUrl   = scraperKey
+      ? `http://api.scraperapi.com?api_key=${scraperKey}&url=${encodeURIComponent(targetUrl)}&render=false`
+      : targetUrl;
+
+    const res = await axios.get<string>(fetchUrl, {
       timeout: 10_000,
-      headers: {
+      headers: scraperKey ? {} : {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'ko-KR,ko;q=0.9',
-        'Referer': 'https://www.fmkorea.com/',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
       },
     });
 
@@ -54,6 +66,7 @@ export async function GET() {
 
     results.fmkoreaHtml = {
       status:        res.status,
+      proxy:         !!scraperKey,
       title:         res.data.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1] ?? '',
       topClasses,
       widgetSnippet,

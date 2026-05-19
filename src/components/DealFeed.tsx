@@ -184,6 +184,8 @@ export default function DealFeed({ initialDeals = [] }: Props) {
     return () => obs.disconnect();
   }, [fetchMore]);
 
+  const filteredDeals = deals.filter(d => activeSources.includes(d.source));
+
   return (
     <div className="bg-surface text-zinc-100">
       <KeywordToast deals={deals} prevDealIds={prevDealIdsRef.current} keywords={keywords} />
@@ -235,19 +237,18 @@ export default function DealFeed({ initialDeals = [] }: Props) {
           </div>
         )}
 
-        {/* Deal list */}
-        {!loading && deals.filter(d => activeSources.includes(d.source)).length === 0 && !error && (
+        {/* Empty state */}
+        {!loading && filteredDeals.length === 0 && !error && (
           <div className="mt-20 text-center">
             <p className="text-4xl mb-3">🔍</p>
             <p className="text-zinc-400 text-sm">검색 결과가 없어요</p>
           </div>
         )}
 
-        {!loading && (
+        {/* Deal list — filteredDeals > 0 일 때만 렌더링 */}
+        {!loading && filteredDeals.length > 0 && (
           <div className="mt-4 space-y-1.5 animate-fade-in">
-            {deals
-              .filter(d => activeSources.includes(d.source))
-              .map(deal => <DealCard key={deal.id} deal={deal} />)}
+            {filteredDeals.map(deal => <DealCard key={deal.id} deal={deal} />)}
           </div>
         )}
 
@@ -262,7 +263,7 @@ export default function DealFeed({ initialDeals = [] }: Props) {
         )}
 
         {/* All loaded */}
-        {!loading && !hasMore && deals.length > 0 && (
+        {!loading && !hasMore && filteredDeals.length > 0 && (
           <p className="text-center text-zinc-700 text-xs py-8">모든 핫딜을 불러왔어요 🎉</p>
         )}
       </main>

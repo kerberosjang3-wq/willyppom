@@ -5,14 +5,28 @@ import { detectCategory, makeId, safeNumber } from './utils';
 
 const BASE_URL  = 'https://www.fmkorea.com';
 const TIMEOUT   = 12_000;
-const MAX_PAGES = 5;
+const MAX_PAGES = 3;
 
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-  'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
-  'Referer': 'https://www.fmkorea.com/',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+  'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+  'Accept-Encoding': 'gzip, deflate, br',
+  'Connection': 'keep-alive',
+  'Upgrade-Insecure-Requests': '1',
+  'Sec-Fetch-Dest': 'document',
+  'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Site': 'none',
+  'Sec-Fetch-User': '?1',
 };
+
+// SCRAPER_API_KEY 환경변수가 있으면 ScraperAPI 프록시 경유
+// https://www.scraperapi.com (무료 월 5000회)
+function buildFetchUrl(targetUrl: string): string {
+  const key = process.env.SCRAPER_API_KEY;
+  if (key) return `http://api.scraperapi.com?api_key=${key}&url=${encodeURIComponent(targetUrl)}&render=false`;
+  return targetUrl;
+}
 
 const SOLD_OUT_RE = /[\[(（]?(마감|품절|종료|판매종료|sold\s*out)[\])）]?/i;
 
@@ -52,8 +66,14 @@ function parsePostTime(raw: string): string {
 //   img[data-original]                                 ← 썸네일 (lazy)
 
 async function scrapePage(page: number): Promise<{ deals: Deal[]; hasMore: boolean }> {
-  const url = `${BASE_URL}/index.php?mid=hotdeal&page=${page}`;
-  const res = await axios.get<string>(url, { timeout: TIMEOUT, headers: HEADERS });
+  const targetUrl = `${BASE_URL}/index.php?mid=hotdeal&page=${page}`;
+  const fetchUrl  = buildFetchUrl(targetUrl);
+  const useProxy  = fetchUrl !== targetUrl;
+
+  const res = await axios.get<string>(fetchUrl, {
+    timeout: TIMEOUT,
+    headers: useProxy ? {} : HEADERS,  // ScraperAPI는 자체 헤더 사용
+  });
   const $   = cheerio.load(res.data);
   const deals: Deal[] = [];
 
