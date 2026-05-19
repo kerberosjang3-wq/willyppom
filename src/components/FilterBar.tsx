@@ -6,9 +6,9 @@ import { CATEGORY_META, SOURCE_META } from '@/types/deal';
 type SortId = 'view' | 'date' | 'comment';
 
 const SORT_OPTIONS: { id: SortId; label: string }[] = [
-  { id: 'date',    label: '등록순' },
-  { id: 'view',    label: '조회순' },
-  { id: 'comment', label: '댓글순' },
+  { id: 'date',    label: '등록' },
+  { id: 'view',    label: '조회' },
+  { id: 'comment', label: '댓글' },
 ];
 
 const SOURCE_OPTIONS: SourceId[] = ['ppomppu', 'quasarzone', 'fmkorea'];
