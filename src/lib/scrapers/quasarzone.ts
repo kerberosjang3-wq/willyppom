@@ -5,7 +5,7 @@ import { makeId, safeNumber } from './utils';
 
 const BOARD_URL = 'https://quasarzone.com/bbs/qb_saleinfo';
 const BASE_URL  = 'https://quasarzone.com';
-const TIMEOUT   = 10_000;
+const TIMEOUT   = 5_000;
 
 const SOLD_OUT_KEYWORDS = /[\[(（]?(마감|품절|종료|판매종료|sold\s*out)[\])）]?/i;
 

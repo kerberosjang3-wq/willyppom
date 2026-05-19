@@ -4,8 +4,8 @@ import type { Deal } from '@/types/deal';
 import { detectCategory, makeId, safeNumber } from './utils';
 
 const BASE_URL  = 'https://www.fmkorea.com';
-const TIMEOUT   = 12_000;
-const MAX_PAGES = 3;
+const TIMEOUT   = 5_000;
+const MAX_PAGES = 2;
 
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',

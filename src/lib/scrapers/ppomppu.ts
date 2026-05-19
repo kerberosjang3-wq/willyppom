@@ -4,8 +4,8 @@ import type { Deal } from '@/types/deal';
 import { detectCategory, makeId, safeNumber } from './utils';
 
 const BASE_URL  = 'https://m.ppomppu.co.kr';
-const TIMEOUT   = 10_000;
-const MAX_PAGES = 2;
+const TIMEOUT   = 5_000;
+const MAX_PAGES = 1;
 
 function boardUrl(page: number) {
   return `${BASE_URL}/new/pop_bbs.php?id=ppomppu&bot_type=pop_bbs&page=${page}`;
