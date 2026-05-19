@@ -8,6 +8,7 @@ import Header from './Header';
 import FilterBar from './FilterBar';
 import { getReadIds } from '@/hooks/useReadDeal';
 import { getKeywords } from '@/hooks/useKeywords';
+import { useFilterPrefs } from '@/hooks/useFilterPrefs';
 import KeywordToast from './KeywordToast';
 import KeywordPanel from './KeywordPanel';
 
@@ -45,9 +46,13 @@ export default function DealFeed({ initialDeals = [] }: Props) {
   const [lastUpdated, setLastUpdated] = useState<string>();
   const [error, setError]           = useState<string>();
 
-  const [category, setCategory]     = useState<CategoryId>('all');
-  const [sort, setSort]             = useState<'view' | 'date' | 'comment'>('date');
-  const [activeSources, setActiveSources] = useState<SourceId[]>(['ppomppu', 'quasarzone', 'fmkorea']);
+  const {
+    category,    setCategory,
+    sort,        setSort,
+    sources:     activeSources,
+    setSources:  setActiveSources,
+    loaded:      filterLoaded,
+  } = useFilterPrefs();
   const [searchQuery, setSearchQuery] = useState('');
   const [showKeywords, setShowKeywords] = useState(false);
   const prevDealIdsRef = useRef<Set<string>>(new Set(initialDeals.map(d => d.id)));
@@ -114,15 +119,16 @@ export default function DealFeed({ initialDeals = [] }: Props) {
   }, [buildUrl, loadingMore, hasMore, page, searchQuery]);
 
   // Initial fetch + re-fetch when filters change
-  // Skip initial fetch when SSR data already populated
+  // filterLoaded가 true가 된 후(localStorage 복원 완료) 실행
   useEffect(() => {
+    if (!filterLoaded) return;
     if (isInitialMount.current && initialDeals.length > 0) {
       isInitialMount.current = false;
       return;
     }
     isInitialMount.current = false;
     fetchDeals();
-  }, [category, sort]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [category, sort, filterLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Debounced search — skip initial mount (filter effect handles first fetch)
   useEffect(() => {

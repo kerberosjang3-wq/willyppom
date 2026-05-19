@@ -13,19 +13,22 @@ import type { Comment } from '@/app/api/comments/route';
 const PriceGauge    = dynamic(() => import('@/components/PriceGauge'),    { ssr: false });
 const NaverPriceBar = dynamic(() => import('@/components/NaverPriceBar'), { ssr: false });
 
-// date-fns replaced with native JS — saves ~13-40KB from the client bundle
 const _pad = (n: number) => String(n).padStart(2, '0');
 function fmtPostTime(d: Date): string {
-  const now = new Date();
-  const hhmm = `${_pad(d.getHours())}:${_pad(d.getMinutes())}`;
-  const sameDay =
-    d.getFullYear() === now.getFullYear() &&
-    d.getMonth()    === now.getMonth()    &&
-    d.getDate()     === now.getDate();
-  if (sameDay) return hhmm;
+  const diffMs   = Date.now() - d.getTime();
+  const diffMin  = Math.floor(diffMs / 60_000);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay  = Math.floor(diffHour / 24);
+
+  if (diffMin  <  1) return '방금';
+  if (diffMin  < 60) return `${diffMin}분 전`;
+  if (diffHour < 24) return `${diffHour}시간 전`;
+  if (diffDay  <  7) return `${diffDay}일 전`;
+
   const mmdd = `${_pad(d.getMonth() + 1)}/${_pad(d.getDate())}`;
-  if (d.getFullYear() === now.getFullYear()) return `${mmdd} ${hhmm}`;
-  return `${String(d.getFullYear()).slice(2)}/${mmdd}`;
+  return d.getFullYear() === new Date().getFullYear()
+    ? mmdd
+    : `${String(d.getFullYear()).slice(2)}/${mmdd}`;
 }
 
 interface Props {
@@ -167,7 +170,7 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
       >
         <div className="flex gap-2.5">
 
-          <div className="shrink-0 w-8 h-8 rounded-md overflow-hidden bg-zinc-800 flex items-center justify-center">
+          <div className="shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-zinc-800/80 flex items-center justify-center">
             {deal.thumbnail ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -177,9 +180,10 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
                 loading="lazy"
                 decoding="async"
                 className="w-full h-full object-cover"
+                style={{ aspectRatio: '1 / 1' }}
               />
             ) : (
-              <span className="text-base leading-none">{catMeta.emoji}</span>
+              <span className="text-2xl leading-none">{catMeta.emoji}</span>
             )}
           </div>
 
@@ -314,7 +318,7 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
             </svg>
             {deal.likeCount}
           </span>
-          <span className="text-[10px] text-zinc-500 font-dseg">{postTime}</span>
+          <span className="text-[9px] text-zinc-600">{postTime}</span>
         </div>
       </div>
 
