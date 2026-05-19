@@ -52,7 +52,8 @@ export default function DealFeed({ initialDeals = [] }: Props) {
   const [showKeywords, setShowKeywords] = useState(false);
   const prevDealIdsRef = useRef<Set<string>>(new Set(initialDeals.map(d => d.id)));
   const [keywords, setKeywords]     = useState<string[]>([]);
-  const isInitialMount = useRef(true);
+  const isInitialMount   = useRef(true);
+  const isFirstSearch    = useRef(true);
 
   const sentinelRef    = useRef<HTMLDivElement>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -123,8 +124,12 @@ export default function DealFeed({ initialDeals = [] }: Props) {
     fetchDeals();
   }, [category, sort]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Debounced search
+  // Debounced search — skip initial mount (filter effect handles first fetch)
   useEffect(() => {
+    if (isFirstSearch.current) {
+      isFirstSearch.current = false;
+      return;
+    }
     clearTimeout(searchTimerRef.current);
     searchTimerRef.current = setTimeout(() => fetchDeals({ query: searchQuery }), 400);
     return () => clearTimeout(searchTimerRef.current);
