@@ -5,16 +5,20 @@ import type { CategoryId, SourceId } from '@/types/deal';
 
 const KEY = 'willyppom:filter';
 
+type ViewMode = 'list' | 'grid';
+
 interface Prefs {
   category: CategoryId;
   sort:     'view' | 'date' | 'comment';
   sources:  SourceId[];
+  view:     ViewMode;
 }
 
 const DEFAULTS: Prefs = {
   category: 'all',
   sort:     'date',
   sources:  ['ppomppu', 'quasarzone', 'fmkorea'],
+  view:     'list',
 };
 
 const ALL_SOURCES: SourceId[] = ['ppomppu', 'quasarzone', 'fmkorea'];
@@ -27,6 +31,7 @@ export function useFilterPrefs() {
   const [category, setCategory] = useState<CategoryId>(DEFAULTS.category);
   const [sort, setSort]         = useState<'view' | 'date' | 'comment'>(DEFAULTS.sort);
   const [sources, setSources]   = useState<SourceId[]>(DEFAULTS.sources);
+  const [view, setView]         = useState<ViewMode>(DEFAULTS.view);
   const [loaded, setLoaded]     = useState(false);
 
   // 마운트 후 localStorage에서 복원
@@ -37,6 +42,7 @@ export function useFilterPrefs() {
         const saved: Partial<Prefs> = JSON.parse(raw);
         if (saved.category) setCategory(saved.category);
         if (saved.sort)     setSort(saved.sort);
+        if (saved.view === 'list' || saved.view === 'grid') setView(saved.view);
         if (Array.isArray(saved.sources) && saved.sources.every(isValidSource) && saved.sources.length > 0) {
           setSources(saved.sources);
         }
@@ -49,9 +55,9 @@ export function useFilterPrefs() {
   useEffect(() => {
     if (!loaded) return;
     try {
-      localStorage.setItem(KEY, JSON.stringify({ category, sort, sources }));
+      localStorage.setItem(KEY, JSON.stringify({ category, sort, sources, view }));
     } catch {}
-  }, [category, sort, sources, loaded]);
+  }, [category, sort, sources, view, loaded]);
 
-  return { category, setCategory, sort, setSort, sources, setSources, loaded };
+  return { category, setCategory, sort, setSort, sources, setSources, view, setView, loaded };
 }

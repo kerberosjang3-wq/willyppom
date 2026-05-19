@@ -51,6 +51,7 @@ export default function DealFeed({ initialDeals = [] }: Props) {
     sort,        setSort,
     sources:     activeSources,
     setSources:  setActiveSources,
+    view,        setView,
     loaded:      filterLoaded,
   } = useFilterPrefs();
   const [searchQuery, setSearchQuery] = useState('');
@@ -214,9 +215,11 @@ export default function DealFeed({ initialDeals = [] }: Props) {
           activeCategory={category}
           activeSort={sort}
           activeSources={activeSources}
+          activeView={view}
           onCategory={c => { setCategory(c); }}
           onSort={(s: 'view' | 'date' | 'comment') => setSort(s)}
           onSources={setActiveSources}
+          onView={setView}
         />
       </div>
 
@@ -258,9 +261,15 @@ export default function DealFeed({ initialDeals = [] }: Props) {
 
         {/* Deal list — filteredDeals > 0 일 때만 렌더링 */}
         {!loading && filteredDeals.length > 0 && (
-          <div className="mt-4 space-y-1.5 animate-fade-in">
-            {filteredDeals.map(deal => <DealCard key={deal.id} deal={deal} />)}
-          </div>
+          view === 'grid' ? (
+            <div className="mt-3 grid grid-cols-2 gap-2 animate-fade-in">
+              {filteredDeals.map(deal => <DealCard key={deal.id} deal={deal} isGrid />)}
+            </div>
+          ) : (
+            <div className="mt-4 space-y-1.5 animate-fade-in">
+              {filteredDeals.map(deal => <DealCard key={deal.id} deal={deal} />)}
+            </div>
+          )
         )}
 
         {/* Load-more sentinel */}
