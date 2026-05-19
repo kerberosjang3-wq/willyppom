@@ -104,6 +104,7 @@ function SwipeRow({ deal, onDelete, onBookmarkChange, openId, setOpenId }: Swipe
           transition: dragging.current ? 'none' : 'transform 0.22s ease',
         }}
         onClick={() => { if (isOpen) setOpenId(null); }}
+        className="bg-[#1c1c21] rounded-2xl"
       >
         <div onClick={onBookmarkChange}>
           <DealCard deal={deal} showNaverGauge />
