@@ -183,7 +183,7 @@ export default function Header({ lastUpdated, total, searchQuery, onSearch, onKe
           )}
           {updatedText && (
             <span className="text-[10px] text-zinc-600 ml-auto font-medium">
-              <span className="font-dseg">{updatedText}</span> 갱신됨
+              {updatedText} 갱신됨
             </span>
           )}
         </div>
