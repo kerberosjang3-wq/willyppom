@@ -1,3 +1,8 @@
+// Bundle analyzer: only loaded when ANALYZE=true to avoid requiring the package at all times
+const withBundleAnalyzer = process.env.ANALYZE === 'true'
+  ? require('@next/bundle-analyzer')({ enabled: true, openAnalyzer: false })
+  : (x) => x;
+
 const withPWA = require('@ducanh2912/next-pwa').default({
   dest: 'public',
   cacheOnFrontEndNav: true,
@@ -16,10 +21,9 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**' },
-      { protocol: 'http', hostname: '**' },
+      { protocol: 'http',  hostname: '**' },
     ],
   },
 };
 
-module.exports = withPWA(nextConfig);
-
+module.exports = withBundleAnalyzer(withPWA(nextConfig));

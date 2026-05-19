@@ -1,12 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import type { Deal } from '@/types/deal';
 import DealFeed from '@/components/DealFeed';
-import BookmarkFeed from '@/components/BookmarkFeed';
-import LowestPriceFeed from '@/components/LowestPriceFeed';
 import BottomTabBar, { type TabId } from '@/components/BottomTabBar';
 import Header from '@/components/Header';
+
+// Lazy-load non-default tabs — only downloaded when the user first taps the tab
+const BookmarkFeed    = dynamic(() => import('@/components/BookmarkFeed'),    { ssr: false });
+const LowestPriceFeed = dynamic(() => import('@/components/LowestPriceFeed'), { ssr: false });
 
 interface Props {
   initialDeals: Deal[];

@@ -1,15 +1,32 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { format, isToday, isThisYear } from 'date-fns';
+import dynamic from 'next/dynamic';
 import type { Deal } from '@/types/deal';
 import { SOURCE_META, CATEGORY_META } from '@/types/deal';
-import PriceGauge from '@/components/PriceGauge';
-import NaverPriceBar from '@/components/NaverPriceBar';
 import type { NaverPriceResult } from '@/app/api/naver-price/route';
 import { useReadDeal } from '@/hooks/useReadDeal';
 import { useBookmark } from '@/hooks/useBookmark';
 import type { Comment } from '@/app/api/comments/route';
+
+// Conditionally-rendered heavy components — loaded only when actually displayed
+const PriceGauge    = dynamic(() => import('@/components/PriceGauge'),    { ssr: false });
+const NaverPriceBar = dynamic(() => import('@/components/NaverPriceBar'), { ssr: false });
+
+// date-fns replaced with native JS — saves ~13-40KB from the client bundle
+const _pad = (n: number) => String(n).padStart(2, '0');
+function fmtPostTime(d: Date): string {
+  const now = new Date();
+  const hhmm = `${_pad(d.getHours())}:${_pad(d.getMinutes())}`;
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth()    === now.getMonth()    &&
+    d.getDate()     === now.getDate();
+  if (sameDay) return hhmm;
+  const mmdd = `${_pad(d.getMonth() + 1)}/${_pad(d.getDate())}`;
+  if (d.getFullYear() === now.getFullYear()) return `${mmdd} ${hhmm}`;
+  return `${String(d.getFullYear()).slice(2)}/${mmdd}`;
+}
 
 interface Props {
   deal: Deal;
@@ -22,11 +39,7 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
   const pubDate  = new Date(deal.publishedAt);
   const soldOut  = deal.isSoldOut ?? false;
 
-  const postTime = isToday(pubDate)
-    ? format(pubDate, 'HH:mm')
-    : isThisYear(pubDate)
-      ? format(pubDate, 'MM/dd HH:mm')
-      : format(pubDate, 'yy/MM/dd');
+  const postTime = fmtPostTime(pubDate);
 
   const [fetchedPrice, setFetchedPrice]   = useState<string | undefined>();
   const [naverPrice, setNaverPrice]       = useState<NaverPriceResult | null>(null);
@@ -47,7 +60,6 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
       if (!entry.isIntersecting) return;
       obs.disconnect();
 
-      // 가격이 없으면 상세 페이지에서 먼저 가져옴
       const pricePromise: Promise<string | null> = deal.price
         ? Promise.resolve(deal.price)
         : fetch(`/api/deal-price?url=${encodeURIComponent(deal.url)}`)
@@ -55,7 +67,6 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
             .then(d => { if (d.price) setFetchedPrice(d.price); return d.price ?? null; })
             .catch(() => null);
 
-      // 찜목록에서만 네이버 가격 비교 자동 호출
       if (showNaverGauge) {
         pricePromise.then(price => {
           if (!price) return;
@@ -72,8 +83,8 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
     return () => obs.disconnect();
   }, [deal.url, deal.price, deal.productName, deal.title, showNaverGauge]);
 
-  const [mallsOpen, setMallsOpen]         = useState(false);
-  const [mallsLoading, setMallsLoading]   = useState(false);
+  const [mallsOpen, setMallsOpen]       = useState(false);
+  const [mallsLoading, setMallsLoading] = useState(false);
 
   const handleCardClick = useCallback(() => {
     if (!showNaverGauge) {
@@ -95,11 +106,11 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
     }
   }, [showNaverGauge, mallsOpen, naverPrice, displayPrice, deal.url, deal.productName, deal.title, markRead]);
 
-  const [commentsOpen, setCommentsOpen]   = useState(false);
+  const [commentsOpen, setCommentsOpen]     = useState(false);
   const [commentsViewed, setCommentsViewed] = useState(false);
-  const [comments, setComments]           = useState<Comment[]>([]);
+  const [comments, setComments]             = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
-  const [commentsError, setCommentsError] = useState(false);
+  const [commentsError, setCommentsError]   = useState(false);
 
   const handleMallClick = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -123,15 +134,10 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (commentsOpen) {
-      setCommentsOpen(false);
-      return;
-    }
-
+    if (commentsOpen) { setCommentsOpen(false); return; }
     setCommentsOpen(true);
     setCommentsViewed(true);
-
-    if (comments.length > 0) return; // already loaded
+    if (comments.length > 0) return;
 
     setCommentsLoading(true);
     setCommentsError(false);
@@ -154,14 +160,13 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
       className={`card-metal bg-surface-card rounded-2xl overflow-hidden border border-surface-border/40 hover:bg-surface-hover transition-all duration-150 ${opacityClass}`}
     >
 
-      {/* 1·2행: 찜목록에서만 카드 클릭 → 쇼핑몰 아코디언 토글 */}
+      {/* 1·2행 */}
       <div
         onClick={handleCardClick}
         className={`block active:scale-[0.98] transition-transform duration-100 px-3 pt-2 pb-1 cursor-pointer select-none${showNaverGauge && mallsOpen ? ' bg-zinc-800/30' : ''}`}
       >
         <div className="flex gap-2.5">
 
-          {/* 썸네일 or 카테고리 이모지 placeholder */}
           <div className="shrink-0 w-8 h-8 rounded-md overflow-hidden bg-zinc-800 flex items-center justify-center">
             {deal.thumbnail ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -169,6 +174,8 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
                 src={deal.thumbnail}
                 alt=""
                 referrerPolicy="no-referrer"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -178,12 +185,10 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
 
           <div className="flex flex-col gap-1 flex-1 min-w-0">
 
-            {/* 1행: 상품명 */}
             <p className={`font-medium text-zinc-100 leading-snug line-clamp-2 ${hasPrice ? 'text-[12px]' : 'text-[13px]'}`}>
               {deal.productName || deal.title}
             </p>
 
-            {/* 2행: 가격 정보 (가격 있을 때만) */}
             {hasPrice && (
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-brand-400 font-bold text-sm leading-none font-dseg">{displayPrice}</span>
@@ -204,7 +209,6 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
               </div>
             )}
 
-            {/* 가격 없을 때: 채널명만 오른쪽에 */}
             {!hasPrice && (
               <div className="flex items-center">
                 <span
@@ -216,12 +220,10 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
               </div>
             )}
 
-            {/* Price Gauge (앱 내 이력) */}
             {deal.priceStats && deal.priceStats.historyCount >= 1 && (
               <PriceGauge currentPriceStr={displayPrice} stats={deal.priceStats} />
             )}
 
-            {/* 네이버 쇼핑 가격 범위 — 찜목록 전용 */}
             {showNaverGauge && naverPrice && displayPrice && (
               <NaverPriceBar
                 currentPriceStr={displayPrice}
@@ -235,7 +237,7 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
         </div>
       </div>
 
-      {/* 3행: 쇼핑몰 뱃지 + 상태 뱃지 + 북마크 / 댓글·좋아요·시간 */}
+      {/* 3행: 뱃지 + 북마크 / 댓글·좋아요·시간 */}
       <div className="flex items-center gap-2 px-3 pb-2">
         <button
           onClick={handleMallClick}
@@ -277,7 +279,6 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
           </span>
         )}
 
-        {/* 북마크 버튼 */}
         <button
           onClick={e => { e.preventDefault(); e.stopPropagation(); toggle(deal); }}
           className="ml-auto text-zinc-600 hover:text-yellow-400 transition-colors"
@@ -290,7 +291,6 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
         </button>
 
         <div className="flex items-center gap-2">
-          {/* 댓글 수 — 클릭 시 인라인 확장 */}
           <button
             onClick={handleCommentToggle}
             className={`text-[10px] flex items-center gap-1 transition-colors ${commentsOpen ? 'text-brand-400' : 'text-zinc-500 hover:text-zinc-300'}`}
@@ -321,8 +321,6 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
       {/* 쇼핑몰 가격 비교 아코디언 — 찜목록 전용 */}
       {showNaverGauge && mallsOpen && (
         <div className="border-t border-surface-border/40 px-3 py-2 flex flex-col gap-1.5">
-
-          {/* 헤더 */}
           <div className="flex items-center justify-between mb-0.5">
             <span className="text-[10px] text-zinc-500 font-semibold">네이버 쇼핑 가격 비교</span>
             <button
@@ -334,7 +332,6 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
             </button>
           </div>
 
-          {/* 로딩 */}
           {mallsLoading && (
             <div className="flex items-center justify-center py-3">
               <svg className="w-4 h-4 animate-spin text-zinc-500" viewBox="0 0 24 24" fill="none">
@@ -344,12 +341,10 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
             </div>
           )}
 
-          {/* 가격 없음 안내 */}
           {!mallsLoading && !naverPrice && (
             <p className="text-[10px] text-zinc-600 text-center py-2">비교 데이터가 없어요</p>
           )}
 
-          {/* 쇼핑몰 목록 */}
           {!mallsLoading && naverPrice && naverPrice.items.map((item, i) => (
             <a
               key={item.link + i}
@@ -358,26 +353,21 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
               rel="noopener noreferrer"
               className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-zinc-800/60 transition-colors group"
             >
-              {/* 순위 */}
               <span className={`shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${
                 i === 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-700/50 text-zinc-500'
               }`}>
                 {i + 1}
               </span>
-
-              {/* 쇼핑몰명 + 상품명 */}
               <div className="flex flex-col min-w-0 flex-1">
                 <span className="text-[10px] font-semibold text-zinc-300 truncate">{item.mallName}</span>
                 <span className="text-[9px] text-zinc-600 truncate">{item.title}</span>
               </div>
-
-              {/* 가격 */}
               <div className="flex flex-col items-end shrink-0">
                 <span className={`text-[11px] font-bold ${i === 0 ? 'text-emerald-400' : 'text-zinc-300'}`}>
                   {item.price.toLocaleString('ko-KR')}원
                 </span>
                 {displayPrice && i === 0 && (() => {
-                  const cur = parseInt(displayPrice.replace(/[^\d]/g, ''));
+                  const cur  = parseInt(displayPrice.replace(/[^\d]/g, ''));
                   const diff = cur - item.price;
                   if (diff > 0) return <span className="text-[9px] text-rose-400">+{diff.toLocaleString()}원</span>;
                   if (diff < 0) return <span className="text-[9px] text-emerald-400">{diff.toLocaleString()}원</span>;
@@ -386,14 +376,12 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
               </div>
             </a>
           ))}
-
         </div>
       )}
 
       {/* 댓글 확장 영역 */}
       {commentsOpen && (
         <div className="border-t border-surface-border/40 px-3 py-2 flex flex-col gap-2">
-
           {commentsLoading && (
             <div className="flex items-center justify-center py-4">
               <svg className="w-4 h-4 animate-spin text-zinc-500" viewBox="0 0 24 24" fill="none">
@@ -402,15 +390,12 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
               </svg>
             </div>
           )}
-
           {commentsError && (
             <p className="text-[11px] text-zinc-500 text-center py-2">댓글을 불러오지 못했어요</p>
           )}
-
           {!commentsLoading && !commentsError && comments.length === 0 && (
             <p className="text-[11px] text-zinc-500 text-center py-2">댓글이 없어요</p>
           )}
-
           {!commentsLoading && comments.map((c, i) => (
             <div
               key={c.id + i}
@@ -426,7 +411,6 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
               <p className="text-[11px] text-zinc-400 leading-snug">{c.body}</p>
             </div>
           ))}
-
           {!commentsLoading && comments.length > 0 && (
             <a
               href={deal.url}
