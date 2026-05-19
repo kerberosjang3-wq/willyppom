@@ -7,41 +7,35 @@ const BASE_URL  = 'https://www.fmkorea.com';
 const TIMEOUT   = 12_000;
 const MAX_PAGES = 5;
 
+// 데스크톱 UA 필수 — 모바일 UA 사용 시 m.fmkorea.com HTML이 내려와 셀렉터 불일치
 const HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-  'Accept-Language': 'ko-KR,ko;q=0.9',
-  'Referer': 'https://www.fmkorea.com/hotdeal',
+  'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
+  'Referer': 'https://www.fmkorea.com/',
 };
 
 const SOLD_OUT_RE = /[\[(（]?(마감|품절|종료|판매종료|sold\s*out)[\])）]?/i;
 
 // XE 날짜 형식 파싱 (KST 기준)
-// "HH:mm"          → 오늘
-// "MM.DD HH:mm"    → 올해
-// "YYYY.MM.DD"     → 해당 날짜 정오
 function parsePostTime(raw: string): string {
-  const kstNow  = new Date(Date.now() + 9 * 3600_000);
+  const kstNow   = new Date(Date.now() + 9 * 3600_000);
   const todayKST = kstNow.toISOString().slice(0, 10);
   const year     = kstNow.getUTCFullYear();
 
-  // "14:30" — 오늘
-  if (/^\d{2}:\d{2}$/.test(raw)) {
+  if (/^\d{2}:\d{2}$/.test(raw))
     return new Date(`${todayKST}T${raw}:00+09:00`).toISOString();
-  }
-  // "2024.05.19 14:30" — 날짜+시간 풀포맷
+
   const fullDT = raw.match(/^(\d{4})\.(\d{2})\.(\d{2})\s+(\d{2}):(\d{2})$/);
   if (fullDT) {
     const [, y, mo, d, hh, mm] = fullDT;
     return new Date(`${y}-${mo}-${d}T${hh}:${mm}:00+09:00`).toISOString();
   }
-  // "05.19 14:30" — 월일+시간
   const partDT = raw.match(/^(\d{2})\.(\d{2})\s+(\d{2}):(\d{2})$/);
   if (partDT) {
     const [, mo, d, hh, mm] = partDT;
     return new Date(`${year}-${mo}-${d}T${hh}:${mm}:00+09:00`).toISOString();
   }
-  // "2024.05.19" — 날짜만
   const dateOnly = raw.match(/^(\d{4})\.(\d{2})\.(\d{2})$/);
   if (dateOnly) {
     const [, y, mo, d] = dateOnly;
@@ -50,21 +44,23 @@ function parsePostTime(raw: string): string {
   return new Date().toISOString();
 }
 
-// div.hotdeal_info 에서 가격·쇼핑몰·배송 전용 필드 추출
+// .hotdeal_info 내 가격·쇼핑몰·배송 전용 필드 추출
+// krepe90 방식: span 전체 text에 키워드 있는지 확인 → a 링크 텍스트 추출
 function parseHotdealInfo(
   $el: cheerio.Cheerio<cheerio.Element>,
   $: cheerio.CheerioAPI,
 ): { price?: string; mallName?: string; shipping?: string } {
   const result: { price?: string; mallName?: string; shipping?: string } = {};
 
-  $el.find('div.hotdeal_info span').each((_, span) => {
-    const label = $(span).clone().find('a').remove().end().text().replace(/\s/g, '');
-    const value = $(span).find('a').first().text().trim();
+  // div.hotdeal_info 아닐 수 있으므로 class만으로 검색
+  $el.find('.hotdeal_info span').each((_, span) => {
+    const fullText = $(span).text();        // 레이블 + 링크 전체 텍스트
+    const value    = $(span).find('a').first().text().trim();
     if (!value) return;
 
-    if (label.includes('가격'))    result.price    = value;
-    else if (label.includes('쇼핑몰')) result.mallName = value;
-    else if (label.includes('배송'))  result.shipping = value;
+    if      (fullText.includes('가격'))   result.price    = value;
+    else if (fullText.includes('쇼핑몰')) result.mallName = value;
+    else if (fullText.includes('배송'))   result.shipping = value;
   });
 
   return result;
@@ -73,31 +69,42 @@ function parseHotdealInfo(
 async function scrapePage(page: number): Promise<{ deals: Deal[]; hasMore: boolean }> {
   const url = `${BASE_URL}/index.php?mid=hotdeal&page=${page}`;
 
-  const res = await axios.get(url, {
-    timeout: TIMEOUT,
-    headers: HEADERS,
-  });
-
-  const $     = cheerio.load(res.data as string);
+  const res = await axios.get<string>(url, { timeout: TIMEOUT, headers: HEADERS });
+  const $   = cheerio.load(res.data);
   const deals: Deal[] = [];
 
-  $('#content .fm_best_widget ul li').each((i, el) => {
-    const $el = $(el);
+  // 페이지가 제대로 수신됐는지 확인 (봇 차단 시 board 없음)
+  const boardName = $('.bd_tl h1 a').first().text().trim();
+  if (!boardName) {
+    console.warn(`[fmkorea] page ${page}: board not found — possible block`);
+    return { deals: [], hasMore: false };
+  }
 
+  $('#content .fm_best_widget ul li').each((i, el) => {
+    const $el     = $(el);
     const titleEl = $el.find('.title a').first();
-    const title   = titleEl.text().trim();
+
+    // 직접 텍스트 노드만 추출 (댓글수 뱃지 등 자식 요소 제외) — krepe90과 동일
+    const title = titleEl
+      .clone()
+      .children()
+      .remove()
+      .end()
+      .text()
+      .trim();
     if (!title) return;
 
+    // href는 "/7106724564" 형태의 순수 숫자 경로
     const href = titleEl.attr('href') ?? '';
     if (!href) return;
     const postUrl = href.startsWith('http') ? href : BASE_URL + href;
 
-    // document_srl 추출 (ID 생성용)
-    const srlMatch = postUrl.match(/\/(\d{7,})/) ?? postUrl.match(/document_srl=(\d+)/);
+    // document_srl 추출
+    const srlMatch = href.match(/\/(\d+)$/) ?? href.match(/(\d{7,})/);
     const srl      = srlMatch?.[1] ?? `${page}-${i}`;
 
-    const rawDate    = $el.find('.regdate').first().text().trim()
-                    || $el.find('time').first().text().trim();
+    const rawDate     = $el.find('.regdate').first().text().trim()
+                      || $el.find('time').first().text().trim();
     const publishedAt = parsePostTime(rawDate);
 
     const commentCount = safeNumber(
@@ -117,8 +124,7 @@ async function scrapePage(page: number): Promise<{ deals: Deal[]; hasMore: boole
 
     const isSoldOut =
       SOLD_OUT_RE.test(title) ||
-      $el.find('.hotdeal_var8Y').length > 0 ||
-      undefined;
+      $el.find('.hotdeal_var8Y').length > 0;
 
     const { price, mallName, shipping } = parseHotdealInfo($el, $);
 
@@ -141,8 +147,12 @@ async function scrapePage(page: number): Promise<{ deals: Deal[]; hasMore: boole
     });
   });
 
-  // 다음 페이지 존재 여부: 페이지네이션 링크 확인
-  const hasMore = deals.length > 0 && $('a.pg_next, .pagination a[href*="page="]').length > 0;
+  console.info(`[fmkorea] page ${page}: ${deals.length} deals`);
+
+  const hasMore = deals.length > 0 && (
+    $('a.pg_next').length > 0 ||
+    $(`.pagination a[href*="page=${page + 1}"]`).length > 0
+  );
   return { deals, hasMore };
 }
 
@@ -154,16 +164,16 @@ export async function scrapeFmkorea(): Promise<Deal[]> {
       const { deals, hasMore } = await scrapePage(page);
       all.push(...deals);
       if (!hasMore) break;
-      // 429 방지: 페이지 사이 간격
       if (page < MAX_PAGES) await new Promise(r => setTimeout(r, 400));
     } catch (err) {
       console.error(
         `[fmkorea] page ${page} failed:`,
         err instanceof Error ? err.message : err,
       );
-      break; // 한 페이지 실패 시 중단 (이미 수집된 것은 반환)
+      break;
     }
   }
 
+  console.info(`[fmkorea] total: ${all.length} deals`);
   return all;
 }
