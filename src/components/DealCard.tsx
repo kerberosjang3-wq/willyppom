@@ -363,22 +363,24 @@ export default function DealCard({ deal, showNaverGauge = false, isGrid = false 
           )}
         </div>
 
-        {/* 하단 액션 행 */}
-        <div className="flex items-center gap-1.5 px-2 pb-1.5">
+        {/* 하단 1행: 쇼핑몰 버튼 + 찜 */}
+        <div className="flex items-center gap-1.5 px-2 pt-0.5">
           <MallBtn compact />
-          <div className="flex items-center gap-1.5 ml-auto">
-            <CommentBtn />
-            <span className="text-[10px] text-zinc-500 flex items-center gap-0.5">
-              <svg className="w-2.5 h-2.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                />
-              </svg>
-              {deal.likeCount}
-            </span>
-            <BookmarkBtn />
-            <span className="text-[9px] text-zinc-600">{postTime}</span>
-          </div>
+          <BookmarkBtn />
+        </div>
+
+        {/* 하단 2행: 댓글 · 좋아요 · 시간 */}
+        <div className="flex items-center gap-2 px-2 pb-1.5 pt-0.5">
+          <CommentBtn />
+          <span className="text-[9px] text-zinc-500 flex items-center gap-0.5">
+            <svg className="w-2.5 h-2.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
+            </svg>
+            {deal.likeCount}
+          </span>
+          <span className="text-[9px] text-zinc-600 ml-auto">{postTime}</span>
         </div>
 
         <ExpandedSections />
