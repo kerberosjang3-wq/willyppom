@@ -12,6 +12,9 @@ const HEADERS_MOBILE = {
   'Accept-Language': 'ko-KR,ko;q=0.9',
 };
 
+// FM Korea 내부 리다이렉트 URL 패턴 (실제 쇼핑몰로 302 리다이렉트)
+const FM_REDIRECT_RE = /\/index\.php\?.*act=goodsRedirect|\/link\//;
+
 // 뽐뿌: s.ppomppu.co.kr?target=BASE64 → 원본 쇼핑몰 URL
 async function extractPpomppuMallUrl(postUrl: string): Promise<string | null> {
   const { data } = await axios.get<ArrayBuffer>(postUrl, {
@@ -36,6 +39,49 @@ async function extractPpomppuMallUrl(postUrl: string): Promise<string | null> {
       }
     } catch { /* invalid URL */ }
   });
+
+  return mallUrl;
+}
+
+// 에펨코리아: 게시글 본문에서 외부 쇼핑몰 URL 추출
+// .xe_content 내 외부 링크(non-fmkorea) 우선, FM Korea 내부 리다이렉트 차선
+async function extractFmkoreaMallUrl(postUrl: string): Promise<string | null> {
+  const key      = process.env.SCRAPER_API_KEY;
+  const fetchUrl = key
+    ? `http://api.scraperapi.com?api_key=${key}&url=${encodeURIComponent(postUrl)}&render=false`
+    : postUrl;
+
+  const { data } = await axios.get<string>(fetchUrl, {
+    timeout:      10_000,
+    maxRedirects: 5,
+    headers: key ? {} : { ...HEADERS_DESKTOP, Referer: 'https://www.fmkorea.com/hotdeal' },
+  });
+
+  const $ = cheerio.load(data);
+
+  if (/just a moment|cloudflare/i.test($('title').text())) return null;
+
+  let mallUrl: string | null = null;
+
+  // 1순위: 게시글 본문 내 직접 외부 링크
+  $('.xe_content a[href]').each((_, el) => {
+    if (mallUrl) return;
+    const href = $(el).attr('href') ?? '';
+    if (href.startsWith('http') && !href.includes('fmkorea.com')) {
+      mallUrl = href;
+    }
+  });
+
+  // 2순위: FM Korea 내부 리다이렉트 (→ 실제 쇼핑몰로 302)
+  if (!mallUrl) {
+    $('a[href]').each((_, el) => {
+      if (mallUrl) return;
+      const href = $(el).attr('href') ?? '';
+      if (FM_REDIRECT_RE.test(href)) {
+        mallUrl = href.startsWith('http') ? href : `https://www.fmkorea.com${href}`;
+      }
+    });
+  }
 
   return mallUrl;
 }
@@ -78,6 +124,8 @@ export async function GET(request: Request) {
 
     if (postUrl.includes('quasarzone.com')) {
       mallUrl = await extractQuasarzoneMallUrl(postUrl);
+    } else if (postUrl.includes('fmkorea.com')) {
+      mallUrl = await extractFmkoreaMallUrl(postUrl);
     } else {
       mallUrl = await extractPpomppuMallUrl(postUrl);
     }
