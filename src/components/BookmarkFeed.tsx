@@ -76,10 +76,10 @@ function SwipeRow({ deal, onDelete, onBookmarkChange, openId, setOpenId }: Swipe
   const displayX = dragging.current ? liveX : targetX;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl">
+    <div className="relative overflow-hidden rounded-2xl bg-[#1c1c21]">
       {/* 삭제 버튼 (슬라이드로 노출) */}
       <div
-        className="absolute right-0 top-0 bottom-0 flex items-center justify-center bg-rose-600/90"
+        className="absolute right-0 top-0 bottom-0 flex items-center justify-center bg-zinc-800"
         style={{ width: REVEAL_WIDTH }}
       >
         <button
