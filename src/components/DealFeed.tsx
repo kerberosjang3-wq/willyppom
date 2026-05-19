@@ -210,16 +210,16 @@ export default function DealFeed({ initialDeals = [] }: Props) {
           onSearch={setSearchQuery}
           onKeyword={() => setShowKeywords(true)}
           keywordCount={keywords.length}
+          activeView={view}
+          onView={setView}
         />
         <FilterBar
           activeCategory={category}
           activeSort={sort}
           activeSources={activeSources}
-          activeView={view}
           onCategory={c => { setCategory(c); }}
           onSort={(s: 'view' | 'date' | 'comment') => setSort(s)}
           onSources={setActiveSources}
-          onView={setView}
         />
       </div>
 

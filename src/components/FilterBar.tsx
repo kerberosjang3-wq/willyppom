@@ -13,22 +13,18 @@ const SORT_OPTIONS: { id: SortId; label: string }[] = [
 
 const SOURCE_OPTIONS: SourceId[] = ['ppomppu', 'quasarzone', 'fmkorea'];
 
-type ViewMode = 'list' | 'grid';
-
 interface Props {
   activeCategory: CategoryId;
   activeSort:     SortId;
   activeSources:  SourceId[];
-  activeView:     ViewMode;
   onCategory: (c: CategoryId) => void;
   onSort:     (s: SortId)     => void;
   onSources:  (s: SourceId[]) => void;
-  onView:     (v: ViewMode)   => void;
 }
 
 const CATEGORIES = Object.entries(CATEGORY_META) as [CategoryId, { name: string; emoji: string }][];
 
-export default function FilterBar({ activeCategory, activeSort, activeSources, activeView, onCategory, onSort, onSources, onView }: Props) {
+export default function FilterBar({ activeCategory, activeSort, activeSources, onCategory, onSort, onSources }: Props) {
   function toggleSource(id: SourceId) {
     if (activeSources.includes(id)) {
       // 하나만 남으면 해제 못하게
@@ -104,30 +100,6 @@ export default function FilterBar({ activeCategory, activeSort, activeSources, a
           })}
         </div>
 
-        {/* View toggle */}
-        <button
-          onClick={() => onView(activeView === 'list' ? 'grid' : 'list')}
-          className="shrink-0 ml-1 p-1 rounded-md text-zinc-500 hover:text-zinc-300 transition-colors"
-          aria-label={activeView === 'list' ? '그리드 뷰로 전환' : '리스트 뷰로 전환'}
-        >
-          {activeView === 'list' ? (
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <rect x="3" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" />
-              <rect x="14" y="14" width="7" height="7" rx="1" />
-            </svg>
-          ) : (
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <line x1="8"  y1="6"  x2="21" y2="6" />
-              <line x1="8"  y1="12" x2="21" y2="12" />
-              <line x1="8"  y1="18" x2="21" y2="18" />
-              <line x1="3"  y1="6"  x2="3.01" y2="6" strokeLinecap="round" strokeWidth={2.5} />
-              <line x1="3"  y1="12" x2="3.01" y2="12" strokeLinecap="round" strokeWidth={2.5} />
-              <line x1="3"  y1="18" x2="3.01" y2="18" strokeLinecap="round" strokeWidth={2.5} />
-            </svg>
-          )}
-        </button>
       </div>
     </div>
   );
