@@ -191,7 +191,7 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
 
             {hasPrice && (
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-brand-400 font-bold text-sm leading-none font-dseg">{displayPrice}</span>
+                <span className="text-brand-400 font-bold text-sm leading-none">{displayPrice}</span>
                 {deal.shipping && (
                   <span className="text-zinc-400 text-[10px] bg-zinc-800 px-1 rounded leading-none py-0.5">
                     {deal.shipping}
