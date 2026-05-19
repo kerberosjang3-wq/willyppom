@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import type { Element } from 'domhandler';
 import type { Deal } from '@/types/deal';
 import { detectCategory, makeId, safeNumber } from './utils';
 
@@ -45,16 +46,15 @@ function parsePostTime(raw: string): string {
 }
 
 // .hotdeal_info 내 가격·쇼핑몰·배송 전용 필드 추출
-// krepe90 방식: span 전체 text에 키워드 있는지 확인 → a 링크 텍스트 추출
 function parseHotdealInfo(
-  $el: cheerio.Cheerio<cheerio.Element>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  $el: cheerio.Cheerio<any>,
   $: cheerio.CheerioAPI,
 ): { price?: string; mallName?: string; shipping?: string } {
   const result: { price?: string; mallName?: string; shipping?: string } = {};
 
-  // div.hotdeal_info 아닐 수 있으므로 class만으로 검색
   $el.find('.hotdeal_info span').each((_, span) => {
-    const fullText = $(span).text();        // 레이블 + 링크 전체 텍스트
+    const fullText = $(span).text();
     const value    = $(span).find('a').first().text().trim();
     if (!value) return;
 
@@ -66,25 +66,70 @@ function parseHotdealInfo(
   return result;
 }
 
-async function scrapePage(page: number): Promise<{ deals: Deal[]; hasMore: boolean }> {
+// XE 구조에서 li 목록을 찾는 selector 후보들 (우선순위 순)
+const ITEM_SELECTORS = [
+  'ul.fm_best_widget > li',          // ul 자체가 fm_best_widget 클래스 (정상 구조)
+  '.fm_best_widget > li',            // 태그 무관
+  '#content .fm_best_widget li',     // 중첩 허용
+  '.board_list li',                  // 일반 게시판 뷰
+  '#content li.li',                  // XE 기본 테이블 행
+];
+
+async function scrapePage(page: number): Promise<{ deals: Deal[]; hasMore: boolean; selectorUsed?: string }> {
   const url = `${BASE_URL}/index.php?mid=hotdeal&page=${page}`;
 
   const res = await axios.get<string>(url, { timeout: TIMEOUT, headers: HEADERS });
   const $   = cheerio.load(res.data);
   const deals: Deal[] = [];
 
-  // 페이지가 제대로 수신됐는지 확인 (봇 차단 시 board 없음)
-  const boardName = $('.bd_tl h1 a').first().text().trim();
-  if (!boardName) {
-    console.warn(`[fmkorea] page ${page}: board not found — possible block`);
+  // HTTP 상태 이상이면 조기 종료
+  if (res.status !== 200) {
+    console.warn(`[fmkorea] page ${page}: HTTP ${res.status}`);
     return { deals: [], hasMore: false };
   }
 
-  $('#content .fm_best_widget ul li').each((i, el) => {
-    const $el     = $(el);
-    const titleEl = $el.find('.title a').first();
+  // Cloudflare 차단 감지 (cf-ray 헤더 또는 타이틀)
+  const pageTitle = $('title').first().text();
+  if (/just a moment|cloudflare|attention required/i.test(pageTitle)) {
+    console.warn(`[fmkorea] page ${page}: Cloudflare challenge — title: "${pageTitle}"`);
+    return { deals: [], hasMore: false };
+  }
 
-    // 직접 텍스트 노드만 추출 (댓글수 뱃지 등 자식 요소 제외) — krepe90과 동일
+  // selector 후보 탐색
+  let $items = $('__nomatch_sentinel__');
+  let selectorUsed = '';
+  for (const sel of ITEM_SELECTORS) {
+    const found = $(sel);
+    if (found.length > 0) {
+      $items = found;
+      selectorUsed = sel;
+      break;
+    }
+  }
+
+  if ($items.length === 0) {
+    // 진단용: 어떤 class들이 실제 HTML에 있는지 로그
+    const classFreq: Record<string, number> = {};
+    for (const m of res.data.matchAll(/class="([^"]+)"/g)) {
+      for (const c of m[1].split(/\s+/)) {
+        classFreq[c] = (classFreq[c] ?? 0) + 1;
+      }
+    }
+    const topClasses = Object.entries(classFreq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 20)
+      .map(([c, n]) => `${c}(${n})`);
+    console.warn(`[fmkorea] page ${page}: no items found. title="${pageTitle}" topClasses=${topClasses.join(',')}`);
+    return { deals: [], hasMore: false };
+  }
+
+  console.info(`[fmkorea] page ${page}: using selector "${selectorUsed}", ${$items.length} items`);
+
+  $items.each((i, el) => {
+    const $el     = $(el);
+    const titleEl = $el.find('.title a, .subject a').first();
+
+    // 직접 텍스트 노드만 추출 (댓글수 뱃지 등 자식 요소 제외)
     const title = titleEl
       .clone()
       .children()
@@ -94,12 +139,10 @@ async function scrapePage(page: number): Promise<{ deals: Deal[]; hasMore: boole
       .trim();
     if (!title) return;
 
-    // href는 "/7106724564" 형태의 순수 숫자 경로
     const href = titleEl.attr('href') ?? '';
     if (!href) return;
     const postUrl = href.startsWith('http') ? href : BASE_URL + href;
 
-    // document_srl 추출
     const srlMatch = href.match(/\/(\d+)$/) ?? href.match(/(\d{7,})/);
     const srl      = srlMatch?.[1] ?? `${page}-${i}`;
 
@@ -147,13 +190,13 @@ async function scrapePage(page: number): Promise<{ deals: Deal[]; hasMore: boole
     });
   });
 
-  console.info(`[fmkorea] page ${page}: ${deals.length} deals`);
+  console.info(`[fmkorea] page ${page}: ${deals.length} deals parsed`);
 
   const hasMore = deals.length > 0 && (
     $('a.pg_next').length > 0 ||
     $(`.pagination a[href*="page=${page + 1}"]`).length > 0
   );
-  return { deals, hasMore };
+  return { deals, hasMore, selectorUsed };
 }
 
 export async function scrapeFmkorea(): Promise<Deal[]> {
