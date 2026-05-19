@@ -15,7 +15,7 @@ function loadBookmarks(): Deal[] {
   }
 }
 
-function saveBookmarks(items: Deal[]) {
+export function saveBookmarks(items: Deal[]) {
   try {
     const capped = items.slice(-MAX_ITEMS);
     localStorage.setItem(LS_KEY, JSON.stringify(capped));

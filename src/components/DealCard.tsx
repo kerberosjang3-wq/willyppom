@@ -151,10 +151,7 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
   return (
     <div
       ref={cardRef}
-      className={`bg-surface-card rounded-2xl overflow-hidden border border-surface-border/40 hover:bg-surface-hover transition-all duration-150 ${opacityClass}`}
-      style={{
-        boxShadow: `0 2px 10px rgba(0,0,0,0.35)`,
-      }}
+      className={`card-metal bg-surface-card rounded-2xl overflow-hidden border border-surface-border/40 hover:bg-surface-hover transition-all duration-150 ${opacityClass}`}
     >
 
       {/* 1·2행: 찜목록에서만 카드 클릭 → 쇼핑몰 아코디언 토글 */}
@@ -189,7 +186,7 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
             {/* 2행: 가격 정보 (가격 있을 때만) */}
             {hasPrice && (
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-brand-400 font-bold text-sm leading-none">{displayPrice}</span>
+                <span className="text-brand-400 font-bold text-sm leading-none font-dseg">{displayPrice}</span>
                 {deal.shipping && (
                   <span className="text-zinc-400 text-[10px] bg-zinc-800 px-1 rounded leading-none py-0.5">
                     {deal.shipping}
@@ -317,7 +314,7 @@ export default function DealCard({ deal, showNaverGauge = false }: Props) {
             </svg>
             {deal.likeCount}
           </span>
-          <span className="text-[10px] text-zinc-500">{postTime}</span>
+          <span className="text-[10px] text-zinc-500 font-dseg">{postTime}</span>
         </div>
       </div>
 
