@@ -65,6 +65,14 @@ export async function GET(req: NextRequest) {
   const paginated = deals.slice(start, start + limit);
   const hasMore   = start + limit < total;
 
+  // 검색·강제갱신은 CDN 캐시 제외, 일반 요청은 CDN이 5분 캐시 후 stale-while-revalidate
+  const cacheControl =
+    forceRefresh || q
+      ? 'no-store'
+      : page > 1
+        ? 'public, s-maxage=60, stale-while-revalidate=300'
+        : 'public, s-maxage=300, stale-while-revalidate=3600';
+
   return NextResponse.json({
     deals: paginated,
     total,
@@ -74,6 +82,6 @@ export async function GET(req: NextRequest) {
     lastUpdated: response.lastUpdated,
     sourceStats: response.sourceStats,
   }, {
-    headers: { 'Cache-Control': 'no-store' },
+    headers: { 'Cache-Control': cacheControl },
   });
 }
