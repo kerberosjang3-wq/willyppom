@@ -98,14 +98,16 @@ export function cleanTitle(title: string, mall?: string): string {
 }
 
 export function normalizeDeal(deal: Deal): Deal {
-  const mallName = extractMall(deal.title);
-  const shipping = extractShipping(deal.title);
-  const price = deal.price || extractPrice(deal.title); // Use already extracted price if available, else try from title
+  // Respect values already set by the scraper (e.g. FM Korea dedicated fields)
+  // Fall back to title parsing only when missing
+  const mallName    = deal.mallName || extractMall(deal.title);
+  const shipping    = deal.shipping || extractShipping(deal.title);
+  const price       = deal.price    || extractPrice(deal.title);
   const productName = cleanTitle(deal.title, mallName);
 
   return {
     ...deal,
-    productName: productName || deal.title, // Fallback to original if completely stripped
+    productName: productName || deal.title,
     mallName,
     shipping,
     price,

@@ -11,7 +11,7 @@ const SORT_OPTIONS: { id: SortId; label: string }[] = [
   { id: 'comment', label: '댓글순' },
 ];
 
-const SOURCE_OPTIONS: SourceId[] = ['ppomppu', 'quasarzone'];
+const SOURCE_OPTIONS: SourceId[] = ['ppomppu', 'quasarzone', 'fmkorea'];
 
 interface Props {
   activeCategory: CategoryId;

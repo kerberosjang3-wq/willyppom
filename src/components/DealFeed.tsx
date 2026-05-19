@@ -47,7 +47,7 @@ export default function DealFeed({ initialDeals = [] }: Props) {
 
   const [category, setCategory]     = useState<CategoryId>('all');
   const [sort, setSort]             = useState<'view' | 'date' | 'comment'>('date');
-  const [activeSources, setActiveSources] = useState<SourceId[]>(['ppomppu', 'quasarzone']);
+  const [activeSources, setActiveSources] = useState<SourceId[]>(['ppomppu', 'quasarzone', 'fmkorea']);
   const [searchQuery, setSearchQuery] = useState('');
   const [showKeywords, setShowKeywords] = useState(false);
   const prevDealIdsRef = useRef<Set<string>>(new Set(initialDeals.map(d => d.id)));
