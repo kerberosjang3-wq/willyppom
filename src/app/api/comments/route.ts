@@ -17,6 +17,19 @@ const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
   'Accept-Language': 'ko-KR,ko;q=0.9',
 };
+const FM_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml',
+  'Accept-Language': 'ko-KR,ko;q=0.9',
+  'Referer': 'https://www.fmkorea.com/',
+};
+
+function proxyUrl(target: string): string {
+  const key = process.env.SCRAPER_API_KEY;
+  return key
+    ? `http://api.scraperapi.com?api_key=${key}&url=${encodeURIComponent(target)}&render=false`
+    : target;
+}
 
 // 뽐뿌: HTML 스크래핑
 async function fetchPpomppuComments(url: string): Promise<Comment[]> {
@@ -36,6 +49,47 @@ async function fetchPpomppuComments(url: string): Promise<Comment[]> {
 
     if (!nickname || !body) return;
     comments.push({ id, nickname, body, time, isReply, upvote, downvote });
+  });
+
+  return comments;
+}
+
+// 에펨코리아: HTML 스크래핑
+// 구조: .fdb_lst_ul li.fdb_itm > .meta(.member_plate / .date) + .comment-content
+async function fetchFmkoreaComments(url: string): Promise<Comment[]> {
+  const fetchTarget = proxyUrl(url);
+  const useProxy    = fetchTarget !== url;
+  const res = await axios.get(fetchTarget, {
+    timeout: TIMEOUT,
+    headers: useProxy ? {} : FM_HEADERS,
+  });
+  const $ = cheerio.load(res.data);
+  const comments: Comment[] = [];
+
+  $('.fdb_lst_ul li.fdb_itm').each((_, el) => {
+    const $el = $(el);
+
+    // 작성자: img(레벨 아이콘) 제거 후 텍스트만
+    const nickname = $el.find('.meta a.member_plate').first()
+      .clone().children('img').remove().end().text().trim();
+
+    // 본문
+    const body = $el.find('.comment-content').first().text().replace(/\s+/g, ' ').trim();
+
+    // 날짜
+    const time = $el.find('.meta .date').first().text().trim();
+
+    // 대댓글: li 클래스에 're ' 포함
+    const isReply = /\bre\b/.test($el.attr('class') ?? '');
+
+    // 고유 ID (li id="comment_XXXXXXXX")
+    const id = $el.attr('id') ?? String(Math.random());
+
+    // 추천수
+    const upvote = parseInt($el.find('.vote_cnt').first().text().trim()) || 0;
+
+    if (!nickname || !body) return;
+    comments.push({ id, nickname, body, time, isReply, upvote, downvote: 0 });
   });
 
   return comments;
@@ -80,7 +134,9 @@ export async function GET(req: NextRequest) {
   try {
     const comments = url.includes('quasarzone.com')
       ? await fetchQuasarzoneComments(url)
-      : await fetchPpomppuComments(url);
+      : url.includes('fmkorea.com')
+        ? await fetchFmkoreaComments(url)
+        : await fetchPpomppuComments(url);
 
     return NextResponse.json({ comments, total: comments.length }, {
       headers: { 'Cache-Control': 'public, max-age=120, stale-while-revalidate=60' },
