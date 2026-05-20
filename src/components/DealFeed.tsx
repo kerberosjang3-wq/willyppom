@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Deal, CategoryId, SourceId } from '@/types/deal';
+import type { Deal } from '@/types/deal';
 import DealCard from './DealCard';
 import LoadingCard from './LoadingCard';
 import Header from './Header';
@@ -206,7 +206,7 @@ export default function DealFeed({ initialDeals = [] }: Props) {
     <div className="flex-1 flex flex-col overflow-hidden bg-surface text-zinc-100">
       <KeywordToast deals={deals} prevDealIds={prevDealIdsRef.current} keywords={keywords} />
       {showKeywords && <KeywordPanel onClose={() => setShowKeywords(false)} />}
-      <div className="shrink-0 bg-surface">
+      <div className="shrink-0 bg-surface relative z-10">
         <Header
           lastUpdated={lastUpdated}
           total={total}

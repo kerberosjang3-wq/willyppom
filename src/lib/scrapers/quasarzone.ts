@@ -137,8 +137,6 @@ export async function scrapeQuasarzone(): Promise<Deal[]> {
       const dateText  = subRow2.find('.date').first().text().trim();
       const publishedAt = parseDate(dateText);
 
-      const ageHours = Math.max(0.1, (Date.now() - new Date(publishedAt).getTime()) / 3_600_000);
-
       deals.push({
         id:          makeId('quasarzone', postId),
         title,

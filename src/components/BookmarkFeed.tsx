@@ -11,12 +11,11 @@ const THRESHOLD    = 48; // 스와이프 확정 임계값(px)
 interface SwipeRowProps {
   deal: Deal;
   onDelete: (id: string) => void;
-  onBookmarkChange: () => void;
   openId: string | null;
   setOpenId: (id: string | null) => void;
 }
 
-function SwipeRow({ deal, onDelete, onBookmarkChange, openId, setOpenId }: SwipeRowProps) {
+function SwipeRow({ deal, onDelete, openId, setOpenId }: SwipeRowProps) {
   const isOpen       = openId === deal.id;
   const [liveX, setLiveX] = useState(0);   // 드래그 중 실시간 offset
   const dragging     = useRef(false);
@@ -106,9 +105,7 @@ function SwipeRow({ deal, onDelete, onBookmarkChange, openId, setOpenId }: Swipe
         onClick={() => { if (isOpen) setOpenId(null); }}
         className="bg-[#1c1c21] rounded-2xl"
       >
-        <div onClick={onBookmarkChange}>
-          <DealCard deal={deal} showNaverGauge />
-        </div>
+        <DealCard deal={deal} showNaverGauge />
       </div>
     </div>
   );
@@ -120,6 +117,10 @@ export default function BookmarkFeed() {
 
   useEffect(() => {
     setDeals(getBookmarks().reverse());
+
+    const syncList = () => setDeals(getBookmarks().reverse());
+    window.addEventListener('bookmarkchange', syncList);
+    return () => window.removeEventListener('bookmarkchange', syncList);
   }, []);
 
   const handleDelete = useCallback((id: string) => {
@@ -128,8 +129,6 @@ export default function BookmarkFeed() {
     setDeals(next.slice().reverse());
     setOpenId(null);
   }, []);
-
-  const refresh = useCallback(() => setDeals(getBookmarks().reverse()), []);
 
   if (deals.length === 0) {
     return (
@@ -152,7 +151,6 @@ export default function BookmarkFeed() {
           key={deal.id}
           deal={deal}
           onDelete={handleDelete}
-          onBookmarkChange={refresh}
           openId={openId}
           setOpenId={setOpenId}
         />

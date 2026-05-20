@@ -164,7 +164,7 @@ export default function DealCard({ deal, showNaverGauge = false, isGrid = false 
     <button
       onClick={handleMallClick}
       disabled={mallLoading}
-      className={`flex items-center gap-1 text-[9px] text-brand-300 border border-brand-500/30 bg-brand-900/20 font-semibold hover:bg-brand-900/40 transition-colors disabled:opacity-60 whitespace-nowrap shrink-0 ${compact ? 'px-1.5 py-0.5 rounded-md' : 'px-1.5 py-0.5 rounded-md'}`}
+      className="flex items-center gap-1 text-[9px] text-brand-300 border border-brand-500/30 bg-brand-900/20 font-semibold hover:bg-brand-900/40 transition-colors disabled:opacity-60 whitespace-nowrap shrink-0 px-1.5 py-0.5 rounded-md"
     >
       {mallLoading ? (
         <svg className="w-2.5 h-2.5 animate-spin" viewBox="0 0 24 24" fill="none">

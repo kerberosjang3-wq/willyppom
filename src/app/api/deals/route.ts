@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-export const preferredRegion = 'hnd1'; // 도쿄 — Cloudflare IP 차단 우회
 import { getCacheWithMeta, clearCache } from '@/lib/cache';
 import { MOCK_DEALS } from '@/lib/mockDeals';
 import type { DealsResponse, CategoryId } from '@/types/deal';
 import { buildAndCacheDeals, refreshInBackground, DEALS_CACHE_KEY } from '@/lib/dealBuilder';
+
+export const preferredRegion = 'hnd1'; // 도쿄 — Cloudflare IP 차단 우회
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
