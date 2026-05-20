@@ -103,7 +103,11 @@ async function scrapePage(page: number): Promise<{ deals: Deal[]; hasMore: boole
     });
   });
 
-  const hasMore = $('a[href*="page="]').length > 0;
+  // 다음 페이지 링크가 존재하는지 확인 (현재 page+1을 가리키는 링크)
+  const hasMore = deals.length > 0 && (
+    $(`a[href*="page=${page + 1}"]`).length > 0 ||
+    $('a.paging_next, a[class*="next"]').length > 0
+  );
   return { deals, hasMore };
 }
 

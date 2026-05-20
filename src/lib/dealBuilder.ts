@@ -56,14 +56,15 @@ async function enrichWithPriceStatsAndLog(deals: any[]) {
         st.sparkline!.push({ v: row.price_value, d: row.created_at });
       });
 
+      // statsMap의 각 항목에 대해 avgPrice를 한 번만 계산
       Object.values(statsMap).forEach(st => {
+        st.avgPrice = Math.round(st.avgPrice / st.historyCount);
         if (st.sparkline && st.sparkline.length > 7) st.sparkline = st.sparkline.slice(-7);
       });
 
       deals.forEach((d, i) => {
         const st = statsMap[matchKeys[i]];
         if (!st || st.historyCount === 0) return;
-        st.avgPrice = Math.round(st.avgPrice / st.historyCount);
         const currentVal = parsePriceValue(d.price);
         st.isAllTimeLow = currentVal !== null && currentVal <= st.minPrice;
         d.priceStats = st;

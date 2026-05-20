@@ -62,8 +62,12 @@ export default function Header({ lastUpdated, total, searchQuery, onSearch, onKe
   }, [onSearch]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchQuery.trim()) {
-      saveRecent(searchQuery.trim());
+    if (e.key === 'Enter') {
+      const q = (e.target as HTMLInputElement).value.trim();
+      if (q) {
+        saveRecent(q);
+        onSearch(q);
+      }
       setShowRecent(false);
       inputRef.current?.blur();
     }
@@ -71,7 +75,7 @@ export default function Header({ lastUpdated, total, searchQuery, onSearch, onKe
       setShowRecent(false);
       inputRef.current?.blur();
     }
-  }, [searchQuery]);
+  }, [onSearch]);
 
   const selectRecent = useCallback((q: string) => {
     handleSearch(q);

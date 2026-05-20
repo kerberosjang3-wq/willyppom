@@ -48,7 +48,9 @@ export async function GET(req: NextRequest) {
   if (q) {
     deals = deals.filter(d =>
       d.title.toLowerCase().includes(q) ||
-      d.description?.toLowerCase().includes(q)
+      (d.productName?.toLowerCase().includes(q) ?? false) ||
+      (d.mallName?.toLowerCase().includes(q) ?? false) ||
+      (d.description?.toLowerCase().includes(q) ?? false)
     );
   }
 

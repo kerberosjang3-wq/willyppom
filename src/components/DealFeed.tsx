@@ -90,9 +90,12 @@ export default function DealFeed({ initialDeals = [] }: Props) {
       if (!res.ok) throw new Error('API 오류');
       const data: FeedResponse = await res.json();
       const sorted = prioritySort(data.deals);
-      prevDealIdsRef.current = new Set(deals.map(d => d.id));
+      // prevDealIdsRef는 현재 deals 상태(state)가 아닌 setter 콜백에서 최신 값으로 업데이트
+      setDeals(prev => {
+        prevDealIdsRef.current = new Set(prev.map(d => d.id));
+        return sorted;
+      });
       setKeywords(getKeywords());
-      setDeals(sorted);
       setTotal(data.total);
       setPage(1);
       setHasMore(data.hasMore);
@@ -143,11 +146,11 @@ export default function DealFeed({ initialDeals = [] }: Props) {
     return () => clearTimeout(searchTimerRef.current);
   }, [searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-refresh
+  // Auto-refresh — fetchDealsRef 사용으로 stale closure 방지
   useEffect(() => {
-    const id = setInterval(() => fetchDeals(), AUTO_REFRESH_MS);
+    const id = setInterval(() => fetchDealsRef.current?.(), AUTO_REFRESH_MS);
     return () => clearInterval(id);
-  }, [fetchDeals]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // fetchDeals ref (이벤트 핸들러에서 최신 함수 참조)
   useEffect(() => { fetchDealsRef.current = fetchDeals; }, [fetchDeals]);
@@ -184,7 +187,7 @@ export default function DealFeed({ initialDeals = [] }: Props) {
       document.removeEventListener('touchmove',  onTouchMove);
       document.removeEventListener('touchend',   onTouchEnd);
     };
-  }, [PULL_THRESHOLD]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps — PULL_THRESHOLD는 모듈 상수
 
   // Infinite scroll via IntersectionObserver
   useEffect(() => {
