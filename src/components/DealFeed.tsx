@@ -62,6 +62,7 @@ export default function DealFeed({ initialDeals = [] }: Props) {
   const isFirstSearch    = useRef(true);
 
   const sentinelRef    = useRef<HTMLDivElement>(null);
+  const mainRef        = useRef<HTMLDivElement>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const [pullY, setPullY]           = useState(0);
@@ -154,7 +155,7 @@ export default function DealFeed({ initialDeals = [] }: Props) {
   // Pull-to-refresh
   useEffect(() => {
     const onTouchStart = (e: TouchEvent) => {
-      if (window.scrollY === 0) touchStartY.current = e.touches[0].clientY;
+      if (mainRef.current && mainRef.current.scrollTop === 0) touchStartY.current = e.touches[0].clientY;
       else touchStartY.current = 0;
     };
     const onTouchMove = (e: TouchEvent) => {
@@ -199,10 +200,10 @@ export default function DealFeed({ initialDeals = [] }: Props) {
   const filteredDeals = deals.filter(d => activeSources.includes(d.source));
 
   return (
-    <div className="bg-surface text-zinc-100">
+    <div className="flex-1 flex flex-col overflow-hidden bg-surface text-zinc-100">
       <KeywordToast deals={deals} prevDealIds={prevDealIdsRef.current} keywords={keywords} />
       {showKeywords && <KeywordPanel onClose={() => setShowKeywords(false)} />}
-      <div className="sticky top-0 z-20 bg-surface">
+      <div className="shrink-0 bg-surface">
         <Header
           lastUpdated={lastUpdated}
           total={total}
@@ -236,7 +237,7 @@ export default function DealFeed({ initialDeals = [] }: Props) {
         />
       </div>
 
-      <main className="px-4 pb-8">
+      <main ref={mainRef} className="flex-1 scroll-elastic px-4 pb-6">
         {/* Error */}
         {error && (
           <div className="mt-6 p-4 rounded-2xl bg-red-900/30 border border-red-800/50 text-red-300 text-sm text-center">

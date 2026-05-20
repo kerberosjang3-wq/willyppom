@@ -30,7 +30,9 @@
     box-sizing: border-box;
   }
 
-  html {
+  html, body {
+    height: 100%;
+    overflow: hidden;
     scroll-behavior: smooth;
   }
 
@@ -104,5 +106,12 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  /* Elastic momentum scrolling container for iOS rubber-band effect */
+  .scroll-elastic {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
   }
 }

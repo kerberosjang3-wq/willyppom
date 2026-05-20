@@ -265,32 +265,46 @@ export default function DealCard({ deal, showNaverGauge = false, isGrid = false 
       )}
 
       {commentsOpen && (
-        <div className="border-t border-surface-border/40 px-3 py-2 flex flex-col gap-2">
+        <div className="border-t border-surface-border/30 px-3.5 py-2.5 flex flex-col gap-2.5 bg-black/15">
           {commentsLoading && (
-            <div className="flex items-center justify-center py-4">
-              <svg className="w-4 h-4 animate-spin text-zinc-500" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            <div className="flex items-center justify-center py-6">
+              <svg className="w-5 h-5 animate-spin text-brand-400" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
               </svg>
             </div>
           )}
-          {commentsError && <p className="text-[11px] text-zinc-500 text-center py-2">댓글을 불러오지 못했어요</p>}
+          {commentsError && (
+            <p className="text-[11px] text-zinc-400 text-center py-3 flex flex-col items-center gap-1">
+              <span className="text-sm opacity-50">⚠️</span>
+              댓글을 불러오지 못했어요
+            </p>
+          )}
           {!commentsLoading && !commentsError && comments.length === 0 && (
-            <p className="text-[11px] text-zinc-500 text-center py-2">댓글이 없어요</p>
+            <p className="text-[11px] text-zinc-400 text-center py-3 flex flex-col items-center gap-1">
+              <span className="text-sm opacity-50">💬</span>
+              댓글이 아직 없어요
+            </p>
           )}
           {!commentsLoading && comments.map((c, i) => (
-            <div key={c.id + i} className={`flex flex-col gap-0.5 ${c.isReply ? 'pl-3 border-l border-zinc-700' : ''}`}>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-semibold text-zinc-300">{c.nickname}</span>
-                <span className="text-[9px] text-zinc-600">{c.time.slice(11)}</span>
-                {c.upvote > 0 && <span className="text-[9px] text-emerald-500 ml-auto">👍 {c.upvote}</span>}
+            <div key={c.id + i} className={`flex flex-col gap-1 py-1 ${c.isReply ? 'pl-3.5 border-l-2 border-brand-500/30 ml-2' : ''}`}>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-zinc-200">{c.nickname}</span>
+                <span className="text-[9px] text-zinc-400 font-medium">
+                  {c.time.includes(' ') || c.time.includes('-') || c.time.includes('.') ? c.time.slice(11) : c.time}
+                </span>
+                {c.upvote > 0 && (
+                  <span className="text-[9.5px] font-medium text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded ml-auto flex items-center gap-0.5">
+                    👍 {c.upvote}
+                  </span>
+                )}
               </div>
-              <p className="text-[11px] text-zinc-400 leading-snug">{c.body}</p>
+              <p className="text-[12px] text-zinc-300 leading-relaxed font-normal whitespace-pre-wrap">{c.body}</p>
             </div>
           ))}
           {!commentsLoading && comments.length > 0 && (
             <a href={deal.url} target="_blank" rel="noopener noreferrer" onClick={markRead}
-              className="text-[10px] text-zinc-600 hover:text-zinc-400 text-center pt-1 transition-colors"
+              className="text-[11px] text-brand-400 hover:text-brand-300 font-semibold text-center pt-2 pb-0.5 transition-colors duration-150 hover:underline block"
             >
               {deal.sourceName}에서 전체 댓글 보기 →
             </a>

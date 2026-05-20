@@ -4,7 +4,7 @@ import type { Deal } from '@/types/deal';
 import { detectCategory, makeId, safeNumber } from './utils';
 
 const BASE_URL  = 'https://www.fmkorea.com';
-const TIMEOUT   = 5_000;
+const TIMEOUT   = 8_000; // Increased to 8s to give ScraperAPI enough time to bypass Cloudflare
 const MAX_PAGES = 2;
 
 const HEADERS = {
