@@ -240,57 +240,60 @@ export default function DealFeed({ initialDeals = [] }: Props) {
         />
       </div>
 
-      <main ref={mainRef} className="flex-1 scroll-elastic px-4 pb-6">
-        {/* Error */}
-        {error && (
-          <div className="mt-6 p-4 rounded-2xl bg-red-900/30 border border-red-800/50 text-red-300 text-sm text-center">
-            {error}
-          </div>
-        )}
-
-        {/* Loading skeletons */}
-        {loading && (
-          <div className="mt-4 space-y-3">
-            {Array.from({ length: 6 }).map((_, i) => <LoadingCard key={i} />)}
-          </div>
-        )}
-
-        {/* Empty state */}
-        {!loading && filteredDeals.length === 0 && !error && (
-          <div className="mt-20 text-center">
-            <p className="text-4xl mb-3">🔍</p>
-            <p className="text-zinc-400 text-sm">검색 결과가 없어요</p>
-          </div>
-        )}
-
-        {/* Deal list — filteredDeals > 0 일 때만 렌더링 */}
-        {!loading && filteredDeals.length > 0 && (
-          view === 'grid' ? (
-            <div className="mt-3 grid grid-cols-2 gap-2 animate-fade-in">
-              {filteredDeals.map(deal => <DealCard key={deal.id} deal={deal} isGrid />)}
+      {/* 스크롤 클리핑 래퍼 — overflow-hidden으로 스크롤바를 이 영역 안에만 표시 */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <main ref={mainRef} className="h-full scroll-elastic px-4 pb-6">
+          {/* Error */}
+          {error && (
+            <div className="mt-6 p-4 rounded-2xl bg-red-900/30 border border-red-800/50 text-red-300 text-sm text-center">
+              {error}
             </div>
-          ) : (
-            <div className="mt-4 space-y-1.5 animate-fade-in">
-              {filteredDeals.map(deal => <DealCard key={deal.id} deal={deal} />)}
+          )}
+
+          {/* Loading skeletons */}
+          {loading && (
+            <div className="mt-4 space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => <LoadingCard key={i} />)}
             </div>
-          )
-        )}
+          )}
 
-        {/* Load-more sentinel */}
-        <div ref={sentinelRef} className="h-1" />
+          {/* Empty state */}
+          {!loading && filteredDeals.length === 0 && !error && (
+            <div className="mt-20 text-center">
+              <p className="text-4xl mb-3">🔍</p>
+              <p className="text-zinc-400 text-sm">검색 결과가 없어요</p>
+            </div>
+          )}
 
-        {/* Loading more spinner */}
-        {loadingMore && (
-          <div className="flex justify-center py-6">
-            <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
+          {/* Deal list — filteredDeals > 0 일 때만 렌더링 */}
+          {!loading && filteredDeals.length > 0 && (
+            view === 'grid' ? (
+              <div className="mt-3 grid grid-cols-2 gap-2 animate-fade-in">
+                {filteredDeals.map(deal => <DealCard key={deal.id} deal={deal} isGrid />)}
+              </div>
+            ) : (
+              <div className="mt-4 space-y-1.5 animate-fade-in">
+                {filteredDeals.map(deal => <DealCard key={deal.id} deal={deal} />)}
+              </div>
+            )
+          )}
 
-        {/* All loaded */}
-        {!loading && !hasMore && filteredDeals.length > 0 && (
-          <p className="text-center text-zinc-700 text-xs py-8">모든 핫딜을 불러왔어요 🎉</p>
-        )}
-      </main>
+          {/* Load-more sentinel */}
+          <div ref={sentinelRef} className="h-1" />
+
+          {/* Loading more spinner */}
+          {loadingMore && (
+            <div className="flex justify-center py-6">
+              <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+
+          {/* All loaded */}
+          {!loading && !hasMore && filteredDeals.length > 0 && (
+            <p className="text-center text-zinc-700 text-xs py-8">모든 핫딜을 불러왔어요 🎉</p>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
