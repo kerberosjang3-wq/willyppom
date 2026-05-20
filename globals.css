@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'DSEG7';
+  src: url('/fonts/DSEG7Classic-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1);    opacity: 0.6; }
+  50%       { transform: scale(1.25); opacity: 1;   }
+}
+
+@keyframes nudge {
+  0%, 100% { transform: translate(0, 0); }
+  50%       { transform: translate(2px, -2px); }
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #131316;
+    color: #e2e2e6;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior: none;
+    /* safe area는 각 컴포넌트에서 직접 처리 */
+  }
+}
+
+@layer utilities {
+  .font-dseg {
+    font-family: 'DSEG7', monospace;
+    letter-spacing: 0.04em;
+  }
+
+  /* Metallic card texture — noise grain + diagonal sheen + rim highlights */
+  .card-metal {
+    background-image:
+      /* Fine grain noise: micro physical texture */
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.78' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E"),
+      /* Diagonal sheen: top-left bright → bottom-right dark (brushed metal) */
+      linear-gradient(
+        145deg,
+        rgba(255,255,255,0.048) 0%,
+        rgba(255,255,255,0.014) 38%,
+        rgba(0,0,0,0.0)         54%,
+        rgba(0,0,0,0.07)       100%
+      ),
+      /* Top fade: overhead light hitting the top face */
+      linear-gradient(
+        180deg,
+        rgba(255,255,255,0.036) 0%,
+        rgba(255,255,255,0.0)   28%
+      );
+    box-shadow:
+      0 2px 12px rgba(0,0,0,0.42),          /* depth drop shadow */
+      inset 0  1px 0 rgba(255,255,255,0.10), /* top rim chamfer highlight */
+      inset 0 -1px 0 rgba(0,0,0,0.28);      /* bottom edge depth */
+  }
+
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
+  }
+
+  /* Safe area 유틸리티 */
+  .pt-safe { padding-top:    env(safe-area-inset-top,    0px); }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .pl-safe { padding-left:   env(safe-area-inset-left,   0px); }
+  .pr-safe { padding-right:  env(safe-area-inset-right,  0px); }
+  /* 고정 탭바(약 60px) + 홈 인디케이터 safe area */
+  .pb-tab-safe { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Elastic momentum scrolling container for iOS rubber-band effect */
+  .scroll-elastic {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+}
