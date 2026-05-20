@@ -32,8 +32,10 @@
 
   html, body {
     height: 100%;
-    overflow: hidden;
+    overflow: hidden !important;
     scroll-behavior: smooth;
+    margin: 0;
+    padding: 0;
   }
 
   body {
@@ -113,5 +115,20 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
+  }
+
+  /* Custom thin scrollbar to make it premium, neat, and strictly contained */
+  .scroll-elastic::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scroll-elastic::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scroll-elastic::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 9999px;
+  }
+  .scroll-elastic::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
   }
 }
