@@ -115,23 +115,10 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
+    scrollbar-width: none;       /* Firefox */
+    -ms-overflow-style: none;    /* IE / Edge */
   }
-
-  /* Custom thin scrollbar — strictly contained within the scroll area */
   .scroll-elastic::-webkit-scrollbar {
-    width: 4px;
-  }
-  .scroll-elastic::-webkit-scrollbar-track {
-    background: transparent;
-    /* margin keeps the track away from the header and bottom-tab edges */
-    margin-top: 12px;
-    margin-bottom: 12px;
-  }
-  .scroll-elastic::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
-    border-radius: 9999px;
-  }
-  .scroll-elastic::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.25);
+    display: none;               /* Chrome / Safari / iOS */
   }
 }
