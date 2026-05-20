@@ -31,7 +31,7 @@ export default function HomeClient({ initialDeals }: Props) {
               <p className="text-[11px] text-zinc-500">현재 역대 최저가를 달성한 딜만 모았어요</p>
             </div>
           </div>
-          <div className="flex-1 scroll-elastic pb-20">
+          <div className="flex-1 scroll-elastic pb-6">
             <LowestPriceFeed />
           </div>
         </div>
@@ -46,7 +46,7 @@ export default function HomeClient({ initialDeals }: Props) {
               <p className="text-[11px] text-zinc-500">북마크한 딜을 모아볼 수 있어요</p>
             </div>
           </div>
-          <div className="flex-1 scroll-elastic pb-20">
+          <div className="flex-1 scroll-elastic pb-6">
             <BookmarkFeed />
           </div>
         </div>

@@ -237,7 +237,7 @@ export default function DealFeed({ initialDeals = [] }: Props) {
         />
       </div>
 
-      <main ref={mainRef} className="flex-1 scroll-elastic px-4 pb-20">
+      <main ref={mainRef} className="flex-1 scroll-elastic px-4 pb-6">
         {/* Error */}
         {error && (
           <div className="mt-6 p-4 rounded-2xl bg-red-900/30 border border-red-800/50 text-red-300 text-sm text-center">
